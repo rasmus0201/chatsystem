@@ -1,44 +1,38 @@
-@extends('chatsupport::layout')
+<template>
+    <div class="row">
+        <div class="col-12">
+            <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
+                <div class="messages">
+                    <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in messages" :key="index + '-message'">
+                        {{ message.sender }}: {{ message.message }}<br>
+                        <small>{{ message.time }}</small>
+                    </p>
 
-@section('content')
-    <chatsupport-user></chatsupport-user>
-    {{-- @verbatim
-        <div class="row">
-            <div class="col-12">
-                <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
-                    <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in messages" :key="index">
-                            {{ message.sender }}: {{ message.message }}<br>
-                            <small>{{ message.time }}</small>
-                        </p>
+                    <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
+                        <span class="mr-2">{{ client.name }}:</span>
 
-                        <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index">
-                            <span class="mr-2">{{ client.name }}:</span>
-
-                            <span class="lds-ellipsis">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-                        </p>
-                    </div>
+                        <span class="lds-ellipsis">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </p>
                 </div>
-                <div class="row mt-4">
-                    <div class="col-9">
-                        <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
-                    </div>
-                    <div class="col-3">
-                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!clients.length">Send</button>
-                    </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-9">
+                    <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!clients.length">Send</button>
                 </div>
             </div>
         </div>
-    @endverbatim --}}
-@endsection
+    </div>
+</template>
 
-@section('script')
-{{-- <script type="text/javascript">
-    const app = new Vue({
+<script>
+    export default {
         data() {
             return {
                 message: '',
@@ -58,7 +52,7 @@
             typingClients () {
                 var typing = [];
 
-                for (client of this.clients) {
+                for (const client of this.clients) {
                     if (client.typing) {
                         typing.push(client);
                     }
@@ -167,7 +161,7 @@
                     return;
                 }
 
-                for (client of this.clients) {
+                for (const client of this.clients) {
                     this.send({
                         type: 'message',
                         data: {
@@ -197,7 +191,7 @@
                     return;
                 }
 
-                for (client of this.clients) {
+                for (const client of this.clients) {
                     this.send({
                         type: 'typing',
                         data: {
@@ -286,6 +280,5 @@
                 return time;
             }
         },
-    }).$mount('#app');
-</script> --}}
-@endsection
+    }
+</script>

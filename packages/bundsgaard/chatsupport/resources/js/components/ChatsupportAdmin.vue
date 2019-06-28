@@ -1,69 +1,62 @@
-@extends('chatsupport::layout')
+<template>
+    <div class="row">
+        <div class="col-4">
+            <ul class="list-group" style="min-height: 400px;">
+                <li class="list-group-item d-flex justify-content-between align-items-center" :class="{ 'active': activeClient(client.identifier) }" v-for="(client, index) in clients" :key="index">
+                    <div class="d-flex align-items-center" v-on:click="conversation(client)">
+                        <span v-if="unseenMessages(client.identifier)" class="indicator bg-primary mr-1"></span>
+                        <span>
+                            {{ client.name }}
+                        </span>
+                    </div>
 
-@section('content')
-    <chatsupport-admin></chatsupport-admin>
-
-    {{-- @verbatim
-        <div class="row">
-            <div class="col-4">
-                <ul class="list-group" style="min-height: 400px;">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" :class="{ 'active': activeClient(client.identifier) }" v-for="(client, index) in clients" :key="index">
-                        <div class="d-flex align-items-center" v-on:click="conversation(client)">
-                            <span v-if="unseenMessages(client.identifier)" class="indicator bg-primary mr-1"></span>
-                            <span>
-                                {{ client.name }}
-                            </span>
-                        </div>
-
-                        <div>
-                            <button type="button" class="btn btn-primary btn-sm" v-on:click="conversation(client)" v-text="assignedTo(client.identifier) ? 'Vælg' : 'Forbind'"></button>
-                            <button type="button" class="btn btn-danger btn-sm" v-on:click="ban(client)">Ban</button>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" v-if="clients.length === 0">
-                        Der er ingen brugere.
-                    </li>
-                </ul>
-            </div>
-            <div class="col-8">
-                <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
-                    <p class="p-2 mb-0 bg-light border-bottom" v-if="currentClient.identifier" style="position: sticky;">
-                        {{ currentClient.name }} - ({{ currentClient.language }}) <small>(Session: {{ currentClient.identifier }})</small>
-                        <button class="btn btn-sm btn-warning" v-on:click="unassign(currentClient)">Afslut</button>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-sm" v-on:click="conversation(client)" v-text="assignedTo(client.identifier) ? 'Vælg' : 'Forbind'"></button>
+                        <button type="button" class="btn btn-danger btn-sm" v-on:click="ban(client)">Ban</button>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center" v-if="clients.length === 0">
+                    Der er ingen brugere.
+                </li>
+            </ul>
+        </div>
+        <div class="col-8">
+            <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
+                <p class="p-2 mb-0 bg-light border-bottom" v-if="currentClient.identifier" style="position: sticky;">
+                    {{ currentClient.name }} - ({{ currentClient.language }}) <small>(Session: {{ currentClient.identifier }})</small>
+                    <button class="btn btn-sm btn-warning" v-on:click="unassign(currentClient)">Afslut</button>
+                </p>
+                <div class="messages">
+                    <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in currentMessages" :key="index">
+                        {{ message.sender }}: {{ message.message }}<br>
+                        <small>{{ message.time }}</small>
                     </p>
-                    <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in currentMessages" :key="index">
-                            {{ message.sender }}: {{ message.message }}<br>
-                            <small>{{ message.time }}</small>
-                        </p>
 
-                        <p class="p-2 mb-0 d-flex align-items-center message client" v-if="currentClient.typing">
-                            <span class="mr-2">{{ currentClient.name }}:</span>
+                    <p class="p-2 mb-0 d-flex align-items-center message client" v-if="currentClient.typing">
+                        <span class="mr-2">{{ currentClient.name }}:</span>
 
-                            <span class="lds-ellipsis">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-                        </p>
-                    </div>
+                        <span class="lds-ellipsis">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </p>
                 </div>
-                <div class="row mt-4">
-                    <div class="col-9">
-                        <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
-                    </div>
-                    <div class="col-3">
-                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!currentClient.identifier">Send</button>
-                    </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-9">
+                    <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!currentClient.identifier">Send</button>
                 </div>
             </div>
         </div>
-    @endverbatim --}}
-@endsection
+    </div>
+</template>
 
-@section('script')
-{{-- <script type="text/javascript">
-    const app = new Vue({
+<script>
+    export default {
         data() {
             return {
                 message: '',
@@ -336,6 +329,5 @@
                 return time;
             }
         },
-    }).$mount('#app');
-</script> --}}
-@endsection
+    }
+</script>

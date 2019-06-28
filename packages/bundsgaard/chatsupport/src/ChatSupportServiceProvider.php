@@ -23,7 +23,7 @@ class ChatSupportServiceProvider extends ServiceProvider
         });
 
         $this->loadViewsFrom(
-            __DIR__ . '/../views', 'chatsupport'
+            __DIR__ . '/../resources/views', 'chatsupport'
         );
     }
     /**
