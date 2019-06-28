@@ -1,0 +1,28 @@
+{
+    "name": "rasmus/chatsupport",
+    "description": "A support chat for visitors and supporters",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "rasmus0201",
+            "email": "xxr@live.dk"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "cboden/ratchet": "^0.4.1"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bundsgaard\\ChatSupport\\ChatSupportServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Bundsgaard\\ChatSupport\\": "src/"
+        }
+    }
+}
