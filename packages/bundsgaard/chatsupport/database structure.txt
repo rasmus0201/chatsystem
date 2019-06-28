@@ -1,0 +1,71 @@
+chat_rooms:
+    - id
+    - name
+    - closed
+    - closed_reason
+
+chat_room_opening_hours:
+    - id
+    - room_id
+    - weekday
+    - from_time
+    - to_time
+
+chat_user_statuses: (active=12, inactive=8, disconnected=4, banned=0)
+    - id
+    - priority
+    - slug
+    - name
+
+chat_users:
+    - id
+    - chat_room_id
+    - chat_user_status_id
+    - session_id
+    - user_id
+    - name
+    - email
+    - language
+    - user_agent
+    - ip
+    - admin (bool)
+
+    + timestamps
+
+chat_conversations:
+    - id
+    - chat_room_id
+    - chat_user_id
+
+    - closed_at
+    + timestamps
+
+chat_conversation_participants:
+    - id
+    - chat_conversation_id
+    - chat_user_id
+
+    - connected_at
+    - disconnected_at
+
+chat_messages:
+    - id
+    - chat_conversation_id
+    - chat_user_id
+    - message
+    - system (bool)
+
+    + timestamps
+
+chat_message_receivers:
+    - id
+    - chat_message_id
+    - chat_user_id
+
+chat_message_attachments:
+    - id
+    - chat_message_id
+    - file
+    - name
+    - mime_type
+    - file_size
