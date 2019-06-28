@@ -14,19 +14,17 @@ class ChatSupportServiceProvider extends ServiceProvider
      */
     public function boot(Chat $chat)
     {
-        $this->publishes([
-            __DIR__.'/../config/chatsupport.php' => $this->app->basePath() . '/config',
-        ], 'chatsupport-config');
+        require __DIR__ . '/Lumen.php';
+
+        $this->registerPublishing();
 
         $this->app->singleton(Chat::class, function ($app) use ($chat) {
             return $chat;
         });
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                ServerCommand::class,
-            ]);
-        }
+        $this->loadViewsFrom(
+            __DIR__ . '/../views', 'chatsupport'
+        );
     }
     /**
      * Register the application services.
@@ -37,5 +35,27 @@ class ChatSupportServiceProvider extends ServiceProvider
     {
         // Load the config file
         $this->mergeConfigFrom(__DIR__.'/../config/chatsupport.php', 'chatsupport');
+
+        $this->commands([
+            ServerCommand::class,
+        ]);
+    }
+
+    /**
+     * Register the package's publishable resources.
+     *
+     * @return void
+     */
+    private function registerPublishing()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/chatsupport.php' => $this->app->basePath() . '/config',
+            ], 'chatsupport-config');
+
+            $this->publishes([
+                __DIR__ . '/../public' => $this->app->basePath() . '/public/vendor/chatsupport'
+            ], 'chatsupport-assets');
+        }
     }
 }

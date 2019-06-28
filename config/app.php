@@ -165,6 +165,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Bundsgaard\ChatSupport\ChatSupportServiceProvider::class,
 
         /*
          * Application Service Providers...

@@ -4,10 +4,10 @@ namespace Bundsgaard\ChatSupport\Commands;
 
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
-use Laravel\Lumen\Application;
 use Ratchet\WebSocket\WsServer;
 use Illuminate\Console\Command;
 use Bundsgaard\ChatSupport\Chat;
+use Illuminate\Foundation\Application;
 
 class ServerCommand extends Command
 {

@@ -2,7 +2,7 @@
 
 namespace Bundsgaard\ChatSupport;
 
-use Laravel\Lumen\Application;
+use Illuminate\Foundation\Application;
 use Illuminate\Contracts\Config\Repository as Config;
 
 class EventDispatcher

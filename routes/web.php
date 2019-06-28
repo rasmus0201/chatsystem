@@ -12,9 +12,9 @@
 */
 
 Route::get('/', function () {
-    return view('user');
+    return view('chatsupport::user');
 });
 
 Route::get('/admin', function (){
-    return view('admin');
+    return view('chatsupport::admin');
 });
