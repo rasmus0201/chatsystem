@@ -56,6 +56,9 @@
 </template>
 
 <script>
+    import CookieService from '../services/cookieService';
+    import TimeService from '../services/timeService';
+
     export default {
         data() {
             return {
@@ -68,7 +71,7 @@
                 connection: null,
 
                 name: 'Supporter',
-                identifier: this.getCookie('PHPSESSID'),
+                identifier: CookieService.get('PHPSESSID'),
 
                 typingTimeout: null
             }
@@ -171,7 +174,7 @@
                             this.currentMessages.push({
                                 message: this.currentClient.name + ' har lukket chatten.',
                                 sender: 'System',
-                                time: this.getTime()
+                                time: TimeService.now()
                             });
                             this.currentClient = {};
 
@@ -212,7 +215,7 @@
                     from: this.identifier,
                     message: message,
                     sender: this.name,
-                    time: this.getTime()
+                    time: TimeService.now()
                 };
                 messages.push(msg);
                 this.$set(this.assignedClients[this.currentClient.identifier], 'messages', messages);
@@ -290,43 +293,6 @@
                 }
 
                 return this.assignedClients[identifier].unseen === true;
-            },
-
-            getCookie(name) {
-                var pair = document.cookie.split(';').find(x => x.startsWith(name + '='));
-
-                if (!pair) {
-                    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                }
-
-                return pair.split('=')[1];
-            },
-
-            getTime() {
-                var now = new Date();
-
-                var time = '';
-
-                var hours = now.getHours();
-                var min = now.getMinutes();
-                var sec = now.getSeconds();
-
-                if (hours < 10) {
-                    time += '0';
-                }
-                time += hours + ':';
-
-                if (min < 10) {
-                    time += '0';
-                }
-                time += min + ':';
-
-                if (sec < 10) {
-                    time += '0';
-                }
-                time += sec;
-
-                return time;
             }
         },
     }

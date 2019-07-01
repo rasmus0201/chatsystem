@@ -1,30 +1,33 @@
 <template>
-    <div class="row">
-        <div class="col-12">
-            <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
-                <div class="messages">
-                    <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in messages" :key="index + '-message'">
-                        {{ message.sender }}: {{ message.message }}<br>
-                        <small>{{ message.time }}</small>
-                    </p>
+    <div>
+        <rooms :rooms="rooms" @select="setRoom($event)" v-if="!room"></rooms>
+        <div class="row" v-else>
+            <div class="col-12">
+                <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
+                    <div class="messages">
+                        <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in messages" :key="index + '-message'">
+                            {{ message.sender }}: {{ message.message }}<br>
+                            <small>{{ message.time }}</small>
+                        </p>
 
-                    <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
-                        <span class="mr-2">{{ client.name }}:</span>
+                        <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
+                            <span class="mr-2">{{ client.name }}:</span>
 
-                        <span class="lds-ellipsis">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </span>
-                    </p>
+                            <span class="lds-ellipsis">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </p>
+                    </div>
                 </div>
-            </div>
-            <div class="row mt-4">
-                <div class="col-9">
-                    <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
-                </div>
-                <div class="col-3">
-                    <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!clients.length">Send</button>
+                <div class="row mt-4">
+                    <div class="col-9">
+                        <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
+                    </div>
+                    <div class="col-3">
+                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!clients.length">Send</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -32,21 +35,29 @@
 </template>
 
 <script>
+    import CookieService from '../services/cookieService';
+    import TimeService from '../services/timeService';
+    import WebSocketService from '../services/websocketService';
+
     export default {
         data() {
             return {
                 message: '',
+
+                room: null,
 
                 clients: [],
                 messages: [],
                 connection: null,
 
                 name: 'Rasmus',
-                identifier: this.getCookie('PHPSESSID'),
+                identifier: CookieService.get('PHPSESSID'),
 
                 typingTimeouts: []
             }
         },
+
+        props: ['rooms'],
 
         computed: {
             typingClients () {
@@ -62,20 +73,15 @@
             }
         },
 
-        created() {
-            this.openSocket();
-        },
-
         methods: {
+            setRoom(room) {
+                this.room = room;
+
+                this.openSocket();
+            },
+
             openSocket() {
-                var host = window.location.hostname;
-                var url = 'ws://' + host + '/websocket';
-
-                if (host.match(/\.(test|localhost|dev)/)) {
-                    var url = 'ws://' + host + ':9000';
-                }
-
-                this.connection = new WebSocket(url);
+                this.connection = WebSocketService.new();
 
                 this.connection.onopen = this.onOpen;
                 this.connection.onmessage = this.onMessage;
@@ -92,6 +98,12 @@
                         name: this.name,
                         identifier: this.identifier
                     }
+                });
+
+                this.messages.push({
+                    message: 'Venter på betjening fra ' + this.room.name,
+                    sender: 'System',
+                    time: TimeService.now()
                 });
             },
 
@@ -175,7 +187,7 @@
                     from: this.identifier,
                     message: message,
                     sender: this.name,
-                    time: this.getTime()
+                    time: TimeService.now()
                 });
                 this.message = '';
 
@@ -212,7 +224,7 @@
             },
 
             assignedTo(identifier) {
-                return typeof this.getClientIndex(identifier) !== 'undefined';
+                return (identifier === 'SYSTEM') || (typeof this.getClientIndex(identifier) !== 'undefined');
             },
 
             unassign(identifier) {
@@ -241,43 +253,6 @@
                 this.$nextTick(() => {
                     this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
                 });
-            },
-
-            getCookie(name) {
-                var pair = document.cookie.split(';').find(x => x.startsWith(name + '='));
-
-                if (!pair) {
-                    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);;
-                }
-
-                return pair.split('=')[1];
-            },
-
-            getTime() {
-                var now = new Date();
-
-                var time = '';
-
-                var hours = now.getHours();
-                var min = now.getMinutes();
-                var sec = now.getSeconds();
-
-                if (hours < 10) {
-                    time += '0';
-                }
-                time += hours + ':';
-
-                if (min < 10) {
-                    time += '0';
-                }
-                time += min + ':';
-
-                if (sec < 10) {
-                    time += '0';
-                }
-                time += sec;
-
-                return time;
             }
         },
     }

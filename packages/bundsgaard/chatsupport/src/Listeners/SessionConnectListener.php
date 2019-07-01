@@ -2,6 +2,7 @@
 
 namespace Bundsgaard\ChatSupport\Listeners;
 
+use Bundsgaard\ChatSupport\Storage\Room;
 use Bundsgaard\ChatSupport\Events\MessageEvent;
 use Bundsgaard\ChatSupport\Responders\UserListResponder;
 
@@ -27,6 +28,7 @@ class SessionConnectListener
         $session = $event->connection->session;
 
         $session['name'] = isset($event->data->name) ? $event->data->name : null;
+        $session['room_id'] = isset($event->data->room_id) ? $event->data->room_id : null;
         $session['language'] = isset($event->data->language) ? $event->data->language : null;
         $session['identifier'] = isset($event->data->identifier) ? $event->data->identifier : null;
 
@@ -41,6 +43,14 @@ class SessionConnectListener
             }
 
             $session['auth'] = true;
+        }
+
+        if ($session['room_id'] === null) {
+            $event->connection->close();
+        }
+
+        if (!Room::find($session['room_id'])) {
+            $event->connection->close();
         }
 
         $event->connection->session = $session;

@@ -1,5 +1,5 @@
 @extends('chatsupport::layout')
 
 @section('content')
-    <chatsupport-admin></chatsupport-admin>
+    <chatsupport-agent></chatsupport-agent>
 @endsection

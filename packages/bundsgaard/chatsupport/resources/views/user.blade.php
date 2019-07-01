@@ -1,5 +1,5 @@
 @extends('chatsupport::layout')
 
 @section('content')
-    <chatsupport-user></chatsupport-user>
+    <chatsupport-user :rooms='@json($rooms)'></chatsupport-user>
 @endsection

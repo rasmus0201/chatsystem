@@ -1,6 +1,6 @@
 <?php
 
-namespace Bundsgaard\ChatSupport\Commands;
+namespace Bundsgaard\ChatSupport\Console;
 
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;

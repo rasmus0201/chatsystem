@@ -33,7 +33,7 @@ class Connections
     public function get($identifier = null, $type = null)
     {
         return array_filter($this->connections, function($connection) use ($identifier, $type) {
-            $auth = $connection->session['auth'];
+            $agent = $connection->session['agent'];
             $connectionId = $connection->session['identifier'];
 
             // We are not getting a specific user
@@ -41,33 +41,33 @@ class Connections
                 $identifier = $connectionId;
             }
 
-            if ($type === 'auth') {
-                return $auth && $connectionId === $identifier;
+            if ($type === 'agent') {
+                return $agent && $connectionId === $identifier;
             }
 
-            return !$auth && $connectionId === $identifier;
+            return !$agent && $connectionId === $identifier;
         });
     }
 
     public function getUnique($identifier = null, $type = null)
     {
         $uniqueSessions = [
-            'auth' => [],
+            'agent' => [],
             'guest' => [],
         ];
 
         // Only 1 session pr. user type pr. connection
         $sessions = array_filter($this->connections, function($connection) use ($identifier, $type, &$uniqueSessions) {
-            $auth = $connection->session['auth'];
+            $agent = $connection->session['agent'];
             $connectionId = $connection->session['identifier'];
-            $uniqueAuth = !isset($uniqueSessions['auth'][$connectionId]);
+            $uniqueAgent = !isset($uniqueSessions['agent'][$connectionId]);
             $uniqueGuest = !isset($uniqueSessions['guest'][$connectionId]);
 
-            if ($uniqueAuth && $auth) {
-                $uniqueSessions['auth'][$connectionId] = true;
+            if ($uniqueAgent && $agent) {
+                $uniqueSessions['agent'][$connectionId] = true;
             }
 
-            if ($uniqueGuest && !$auth) {
+            if ($uniqueGuest && !$agent) {
                 $uniqueSessions['guest'][$connectionId] = true;
             }
 
@@ -76,11 +76,11 @@ class Connections
                 $identifier = $connectionId;
             }
 
-            if ($type === 'auth') {
-                return $auth && $connectionId == $identifier && $uniqueAuth;
+            if ($type === 'agent') {
+                return $agent && $connectionId == $identifier && $uniqueAgent;
             }
 
-            return !$auth && $connectionId == $identifier && $uniqueGuest;
+            return !$agent && $connectionId == $identifier && $uniqueGuest;
         });
 
         if (empty($sessions)) {

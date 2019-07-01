@@ -2,8 +2,9 @@
 
 namespace Bundsgaard\ChatSupport;
 
-use Bundsgaard\ChatSupport\Commands\ServerCommand;
 use Illuminate\Support\ServiceProvider;
+use Bundsgaard\ChatSupport\Console\ServerCommand;
+use Bundsgaard\ChatSupport\Console\InstallCommand;
 
 class ChatSupportServiceProvider extends ServiceProvider
 {
@@ -16,6 +17,7 @@ class ChatSupportServiceProvider extends ServiceProvider
     {
         require __DIR__ . '/Lumen.php';
 
+        $this->registerMigrations();
         $this->registerPublishing();
 
         $this->app->singleton(Chat::class, function ($app) use ($chat) {
@@ -34,11 +36,24 @@ class ChatSupportServiceProvider extends ServiceProvider
     public function register()
     {
         // Load the config file
-        $this->mergeConfigFrom(__DIR__.'/../config/chatsupport.php', 'chatsupport');
+        $this->mergeConfigFrom(__DIR__ . '/../config/chatsupport.php', 'chatsupport');
 
         $this->commands([
+            InstallCommand::class,
             ServerCommand::class,
         ]);
+    }
+
+    /**
+     * Register the package's migrations.
+     *
+     * @return void
+     */
+    private function registerMigrations()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->loadMigrationsFrom(__DIR__ . '/Storage/migrations');
+        }
     }
 
     /**

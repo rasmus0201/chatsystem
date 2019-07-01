@@ -11,10 +11,14 @@
 |
 */
 
+use Bundsgaard\ChatSupport\Storage\Room;
+
 Route::get('/', function () {
-    return view('chatsupport::user');
+    return view('chatsupport::user', [
+        'rooms' => Room::all()
+    ]);
 });
 
-Route::get('/admin', function (){
-    return view('chatsupport::admin');
+Route::get('/agent', function (){
+    return view('chatsupport::agent');
 });

@@ -24,8 +24,9 @@ class Chat implements MessageComponentInterface
     public function onOpen(ConnectionInterface $conn)
     {
         $conn->session = [
-            'resourceId' => $conn->resourceId,
-            'auth' => false,
+            'resource_id' => $conn->resourceId,
+            'agent' => false,
+            'room_id' => null,
             'identifier' => null,
             'name' => null,
             'language' => null,

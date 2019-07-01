@@ -15,4 +15,10 @@ return [
         ],
         'Bundsgaard\ChatSupport\Events\ErrorEvent' => [],
     ],
+
+    'storage' => [
+        'database' => [
+            'connection' => env('DB_CONNECTION', 'mysql')
+        ],
+    ],
 ];
