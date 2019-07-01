@@ -94,6 +94,7 @@
                 this.send({
                     type: 'session:connect',
                     data: {
+                        room_id: this.room.id,
                         language: navigator.language,
                         name: this.name,
                         identifier: this.identifier

@@ -27,6 +27,7 @@ class SessionConnectListener
     {
         $session = $event->connection->session;
 
+        $session['agent'] = false;
         $session['name'] = isset($event->data->name) ? $event->data->name : null;
         $session['room_id'] = isset($event->data->room_id) ? $event->data->room_id : null;
         $session['language'] = isset($event->data->language) ? $event->data->language : null;
@@ -42,7 +43,7 @@ class SessionConnectListener
                 return;
             }
 
-            $session['auth'] = true;
+            $session['agent'] = true;
         }
 
         if ($session['room_id'] === null) {
@@ -56,10 +57,10 @@ class SessionConnectListener
         $event->connection->session = $session;
 
         // Get the connections to send to
-        $receivers = $event->connections->getUnique(null, 'auth');
+        $receivers = $event->connections->getUnique(null, 'agent');
 
         // Add the new auth user to receive the user list.
-        if ($session['auth'] === true) {
+        if ($session['agent'] === true) {
             $receivers[] = $event->connection;
         }
 

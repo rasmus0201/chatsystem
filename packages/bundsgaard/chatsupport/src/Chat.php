@@ -39,7 +39,7 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new OpenEvent($this->connections, $conn));
         } catch (\Exception $e) {
-            $this->sendError($conn, $e->getMessage());
+            $this->sendError($conn, [$e->getMessage(), explode("\n", $e->getTraceAsString())]);
         }
     }
 
@@ -48,7 +48,7 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new MessageEvent($this->connections, $from, json_decode($msg)));
         } catch (\Exception $e) {
-            $this->sendError($from, $e->getMessage());
+            $this->sendError($from, [$e->getMessage(), explode("\n", $e->getTraceAsString())]);
         }
     }
 

@@ -25,7 +25,7 @@ class CloseListener
     public function handle(CloseEvent $event)
     {
         // Get the connections to send to
-        $receivers = $event->connections->getUnique(null, 'auth');
+        $receivers = $event->connections->getUnique(null, 'agent');
 
         $this->userListResponder
             ->withConnections($event->connections)
