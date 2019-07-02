@@ -17,4 +17,6 @@ class UserStatus extends Model
     protected $table = 'chatsupport_chat_user_statuses';
 
     protected $guarded = ['id'];
+
+    public $timestamps = false;
 }

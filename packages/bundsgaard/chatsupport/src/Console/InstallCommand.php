@@ -39,6 +39,7 @@ class InstallCommand extends Command
             '--force' => $this->option('force'),
         ]);
 
-        $this->info('Chatsupport scaffolding installed successfully. Please run php artisan migrate.');
+        $this->info('Chatsupport scaffolding installed successfully. Please run:');
+        $this->info('php artisan migrate && php artisan db:seed --class=Bundsgaard\\\\ChatSupport\\\\Storage\\\\Seeds\\\\DatabaseSeeder');
     }
 }

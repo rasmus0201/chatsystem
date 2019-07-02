@@ -1,9 +1,9 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([["/app"],{
 
 /***/ "../../../node_modules/popper.js/dist/esm/popper.js":
-/*!********************************************************************************!*\
-  !*** /Users/rasmus/Sites/chatsystem/node_modules/popper.js/dist/esm/popper.js ***!
-  \********************************************************************************/
+/*!****************************************************************************!*\
+  !*** /Users/rasmus/http/chatsys/node_modules/popper.js/dist/esm/popper.js ***!
+  \****************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -17058,8 +17058,8 @@ function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

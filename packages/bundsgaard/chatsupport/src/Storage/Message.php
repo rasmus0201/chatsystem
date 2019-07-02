@@ -12,4 +12,14 @@ class Message extends Model
     protected $table = 'chatsupport_chat_messages';
 
     protected $guarded = ['id'];
+
+    public function receivers()
+    {
+        return $this->hasMany(MessageReceiver::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class);
+    }
 }

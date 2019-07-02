@@ -29,8 +29,6 @@ class SessionConnectListener
     {
         $session = $event->connection->session;
 
-        \Log::debug((array)$event->data);
-
         if (!isset($event->data->identifier, $event->data->name, $event->data->language)) {
             $event->connection->close();
             return false; // Stop next listeners
@@ -68,16 +66,16 @@ class SessionConnectListener
             ]);
         }
 
-        // TODO
         // Check if user has an ongoing conversation
-        // If so set the room_id from it
-        // if not create new conversation and all data with it.
+        if ($conversation = $user->activeConversations->first()) {
+            $user->room_id = $conversation->room_id;
+        }
 
         if ($user->room_id) {
             $session['room_id'] = $user->room_id;
         }
 
-        if (!Room::find($session['room_id'])) {
+        if (!$room = Room::find($session['room_id'])) {
             $event->connection->close();
             return false; // Stop next listeners
         }
@@ -86,6 +84,18 @@ class SessionConnectListener
         $user->status_id = UserStatus::ACTIVE;
         $user->room_id = $session['room_id'];
         $user->save();
+
+        if (!$user->activeConversations->first()) {
+            $conversation = $user->conversations()->create([
+                'room_id' => $session['room_id'],
+            ]);
+
+            $conversation->participants()->create([
+                'user_id' => $user->id
+            ]);
+
+            $conversation->message('System: Venter på betjening fra ' . $room->name, true);
+        }
 
         $event->connection->session = $session;
         $event->connection->user = $user;

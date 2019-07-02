@@ -19,12 +19,12 @@ class User extends Model
 
     public function conversations()
     {
-        return $this->hasMany(Conversations::class);
+        return $this->hasMany(Conversation::class);
     }
 
     public function activeConversations()
     {
-        return $this->hasMany(Conversations::class)->whereNull('closed_at');
+        return $this->hasMany(Conversation::class)->whereNull('closed_at')->orderBy('created_at', 'DESC');
     }
 
     public function status()

@@ -12,4 +12,6 @@ class MessageReceiver extends Model
     protected $table = 'chatsupport_chat_message_receivers';
 
     protected $guarded = ['id'];
+
+    public $timestamps = false;
 }

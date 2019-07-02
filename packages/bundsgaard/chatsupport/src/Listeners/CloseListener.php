@@ -25,6 +25,10 @@ class CloseListener
      */
     public function handle(CloseEvent $event)
     {
+        if (!isset($event->connection->user)) {
+            return;
+        }
+
         $roomId = $event->connection->user->room_id;
 
         $event->connection->user->status_id = UserStatus::DISCONNECTED;

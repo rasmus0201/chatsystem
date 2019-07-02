@@ -15,8 +15,6 @@ class ChatSupportServiceProvider extends ServiceProvider
      */
     public function boot(Chat $chat)
     {
-        require __DIR__ . '/Lumen.php';
-
         $this->registerMigrations();
         $this->registerPublishing();
 

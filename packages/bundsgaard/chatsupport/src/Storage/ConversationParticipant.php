@@ -12,4 +12,6 @@ class ConversationParticipant extends Model
     protected $table = 'chatsupport_chat_conversation_participants';
 
     protected $guarded = ['id'];
+
+    public $timestamps = false;
 }

@@ -17,6 +17,8 @@ class Room extends Model
         'closed' => 'boolean'
     ];
 
+    public $timestamps = false;
+
     public function openingHours()
     {
         return $this->hasMany(RoomOpeningHour::class)->where('expires_at', '>', new \DateTime());

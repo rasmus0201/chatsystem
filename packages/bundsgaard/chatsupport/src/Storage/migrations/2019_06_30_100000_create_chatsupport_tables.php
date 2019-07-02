@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -95,7 +96,7 @@ class CreateChatsupportTables extends Migration
         $this->schema->create('chatsupport_chat_messages', function (Blueprint $table) {
             $table->increments('id')->unsigned();
             $table->integer('conversation_id');
-            $table->integer('user_id');
+            $table->integer('user_id')->nullable(); // null if from system
             $table->boolean('system')->default(false);
             $table->text('message');
 
