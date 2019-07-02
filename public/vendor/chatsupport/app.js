@@ -4612,10 +4612,18 @@ __webpack_require__.r(__webpack_exports__);
       return typing;
     }
   },
+  created: function created() {
+    this.openSocket();
+  },
   methods: {
     setRoom: function setRoom(room) {
       this.room = room;
-      this.openSocket();
+      this.send({
+        type: 'session:room',
+        data: {
+          room_id: this.room.id
+        }
+      });
     },
     openSocket: function openSocket() {
       this.connection = _services_websocketService__WEBPACK_IMPORTED_MODULE_1__["default"]["new"]();
@@ -4634,17 +4642,16 @@ __webpack_require__.r(__webpack_exports__);
       this.send({
         type: 'session:connect',
         data: {
-          room_id: this.room.id,
+          // room_id: this.room.id,
           language: navigator.language,
           name: this.name,
           identifier: this.identifier
         }
-      });
-      this.messages.push({
-        message: 'Venter på betjening fra ' + this.room.name,
-        sender: 'System',
-        time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
-      });
+      }); // this.messages.push({
+      //     message: 'Venter på betjening fra ' + this.room.name,
+      //     sender: 'System',
+      //     time: TimeService.now()
+      // });
     },
     onMessage: function onMessage(e) {
       var _JSON$parse = JSON.parse(e.data),
@@ -4660,6 +4667,10 @@ __webpack_require__.r(__webpack_exports__);
           this.messages.push(data);
           this.clearTyper(data.from);
           this.scroll();
+          break;
+
+        case 'message':
+          console.log(data);
           break;
 
         case 'typing':

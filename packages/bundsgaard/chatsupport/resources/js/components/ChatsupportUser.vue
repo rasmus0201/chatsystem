@@ -72,11 +72,20 @@
             }
         },
 
+        created() {
+            this.openSocket();
+        },
+
         methods: {
             setRoom(room) {
                 this.room = room;
 
-                this.openSocket();
+                this.send({
+                    type: 'session:room',
+                    data: {
+                        room_id: this.room.id,
+                    }
+                });
             },
 
             openSocket() {
@@ -93,18 +102,18 @@
                 this.send({
                     type: 'session:connect',
                     data: {
-                        room_id: this.room.id,
+                        // room_id: this.room.id,
                         language: navigator.language,
                         name: this.name,
                         identifier: this.identifier
                     }
                 });
 
-                this.messages.push({
-                    message: 'Venter på betjening fra ' + this.room.name,
-                    sender: 'System',
-                    time: TimeService.now()
-                });
+                // this.messages.push({
+                //     message: 'Venter på betjening fra ' + this.room.name,
+                //     sender: 'System',
+                //     time: TimeService.now()
+                // });
             },
 
             onMessage(e) {
@@ -119,6 +128,10 @@
                         this.messages.push(data);
                         this.clearTyper(data.from);
                         this.scroll();
+
+                        break;
+                    case 'message':
+                        console.log(data);
 
                         break;
                     case 'typing':

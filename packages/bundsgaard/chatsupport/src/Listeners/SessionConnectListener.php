@@ -6,6 +6,7 @@ use Bundsgaard\ChatSupport\Storage\Room;
 use Bundsgaard\ChatSupport\Storage\User;
 use Bundsgaard\ChatSupport\Storage\UserStatus;
 use Bundsgaard\ChatSupport\Events\MessageEvent;
+use Bundsgaard\ChatSupport\Responders\MessageResponder;
 use Bundsgaard\ChatSupport\Responders\UserListResponder;
 
 class SessionConnectListener
@@ -13,10 +14,12 @@ class SessionConnectListener
     public $eventType = 'session:connect';
 
     private $userListResponder;
+    private $messageResponder;
 
-    public function __construct(UserListResponder $userListResponder)
+    public function __construct(UserListResponder $userListResponder, MessageResponder $messageResponder)
     {
         $this->userListResponder = $userListResponder;
+        $this->messageResponder = $messageResponder;
     }
 
     /**
@@ -27,12 +30,12 @@ class SessionConnectListener
      */
     public function handle(MessageEvent $event)
     {
-        $session = $event->connection->session;
-
         if (!isset($event->data->identifier, $event->data->name, $event->data->language)) {
             $event->connection->close();
             return false; // Stop next listeners
         }
+
+        $session = $event->connection->session;
 
         $session['agent'] = false;
         $session['name'] = $event->data->name;
@@ -40,7 +43,8 @@ class SessionConnectListener
         $session['identifier'] = $event->data->identifier;
 
         $session['user_id'] = null;
-        $session['room_id'] = isset($event->data->room_id) ? $event->data->room_id : null;
+        $session['room_id'] = null;
+        // $session['room_id'] = isset($event->data->room_id) ? $event->data->room_id : null;
 
         if (isset($event->data->credentials)) {
             if (!$this->checkAuth($event)) {
@@ -54,9 +58,9 @@ class SessionConnectListener
 
         if (!$user = $this->findUser($session['identifier'], $session['agent'])) {
             $user = User::create([
-                'room_id' => $session['room_id'],
-                'status_id' => UserStatus::DISCONNECTED,
                 'user_id' => null,
+                'status_id' => UserStatus::DISCONNECTED,
+                'room_id' => $session['room_id'],
                 'session_id' => $session['identifier'],
                 'agent' => $session['agent'],
                 'name' => $session['name'],
@@ -75,36 +79,45 @@ class SessionConnectListener
             $session['room_id'] = $user->room_id;
         }
 
-        if (!$room = Room::find($session['room_id'])) {
-            $event->connection->close();
-            return false; // Stop next listeners
-        }
+        // if (!$room = Room::find($session['room_id'])) {
+        //     $event->connection->close();
+        //     return false; // Stop next listeners
+        // }
 
         // Now the user is actually verified and therefor active.
         $user->status_id = UserStatus::ACTIVE;
-        $user->room_id = $session['room_id'];
+        // $user->room_id = $session['room_id'];
         $user->save();
 
-        if (!$user->activeConversations->first()) {
-            $conversation = $user->conversations()->create([
-                'room_id' => $session['room_id'],
-            ]);
-
-            $conversation->participants()->create([
-                'user_id' => $user->id
-            ]);
-
-            $conversation->message('System: Venter på betjening fra ' . $room->name, true);
-        }
+        // if (!$user->agent && !$user->activeConversations->first()) {
+        //     $conversation = $user->conversations()->create([
+        //         'room_id' => $session['room_id'],
+        //     ]);
+        //
+        //     $conversation->participants()->create([
+        //         'user_id' => $user->id
+        //     ]);
+        //
+        //     $conversation->message('System: Venter på betjening fra ' . $room->name, true);
+        // }
 
         $event->connection->session = $session;
         $event->connection->user = $user;
 
         // Multicast the user list for this room to agents in this room.
-        $this->userListResponder
-            ->withConnections($event->connections->users($user->room_id))
-            ->withReceivers($event->connections->agents($user->room_id))
-            ->respond();
+        // $this->userListResponder
+        //     ->withConnections($event->connections->users($user->room_id))
+        //     ->withReceivers($event->connections->agents($user->room_id))
+        //     ->respond();
+
+        // An agent can't receive initial messages
+        // TODO check if conversation is set
+        if (!$user->agent) {
+            $this->messageResponder
+                ->withReceiver($event->connection)
+                ->withConversation($conversation)
+                ->respond();
+        }
     }
 
     private function findUser($sessionId, $agent)
