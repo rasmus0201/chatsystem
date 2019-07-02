@@ -35,7 +35,6 @@
 </template>
 
 <script>
-    import CookieService from '../services/cookieService';
     import TimeService from '../services/timeService';
     import WebSocketService from '../services/websocketService';
 
@@ -51,7 +50,7 @@
                 connection: null,
 
                 name: 'Rasmus',
-                identifier: CookieService.get('PHPSESSID'),
+                identifier: window.Chatsupport.session,
 
                 typingTimeouts: []
             }

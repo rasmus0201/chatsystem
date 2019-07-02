@@ -10,4 +10,6 @@ class MessageAttachment extends Model
      * @var string
      */
     protected $table = 'chatsupport_chat_message_attachments';
+
+    protected $guarded = ['id'];
 }

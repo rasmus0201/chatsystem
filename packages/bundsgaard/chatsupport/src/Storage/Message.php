@@ -10,4 +10,6 @@ class Message extends Model
      * @var string
      */
     protected $table = 'chatsupport_chat_messages';
+
+    protected $guarded = ['id'];
 }

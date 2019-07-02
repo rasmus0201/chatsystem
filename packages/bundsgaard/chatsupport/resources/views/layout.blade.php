@@ -6,6 +6,12 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Chatsupport example</title>
         <link href="{{ asset(mix('app.css', 'vendor/chatsupport')) }}" rel="stylesheet" type="text/css">
+
+        <script type="text/javascript">
+            window.Chatsupport = {
+                session: '{{ session()->getId() }}'
+            };
+        </script>
     </head>
     <body>
         <div id="app" class="my-5 container-fluid">

@@ -11,6 +11,8 @@ class Room extends Model
      */
     protected $table = 'chatsupport_chat_rooms';
 
+    protected $guarded = ['id'];
+
     protected $casts = [
         'closed' => 'boolean'
     ];

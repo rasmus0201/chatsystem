@@ -24,13 +24,12 @@ class Chat implements MessageComponentInterface
     public function onOpen(ConnectionInterface $conn)
     {
         $conn->session = [
-            'resource_id' => $conn->resourceId,
+            'typing' => false,
             'agent' => false,
             'room_id' => null,
             'identifier' => null,
             'name' => null,
             'language' => null,
-            'typing' => false
         ];
 
         // Store the new connection to send messages to later
@@ -39,6 +38,8 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new OpenEvent($this->connections, $conn));
         } catch (\Exception $e) {
+            \Log::error($e);
+
             $this->sendError($conn, [$e->getMessage(), explode("\n", $e->getTraceAsString())]);
         }
     }
@@ -48,6 +49,8 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new MessageEvent($this->connections, $from, json_decode($msg)));
         } catch (\Exception $e) {
+            \Log::error($e);
+
             $this->sendError($from, [$e->getMessage(), explode("\n", $e->getTraceAsString())]);
         }
     }
@@ -60,6 +63,8 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new CloseEvent($this->connections, $conn));
         } catch (\Exception $e) {
+            \Log::error($e);
+
             // Connection is closed now
         }
     }
@@ -69,6 +74,8 @@ class Chat implements MessageComponentInterface
         try {
             $this->eventDispatcher->dispatch(new ErrorEvent($this->connections, $conn, $e));
         } catch (\Exception $eventException) {
+            \Log::error($e);
+
             $this->sendError($conn, $e->getMessage());
         }
 

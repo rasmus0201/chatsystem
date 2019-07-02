@@ -14,4 +14,6 @@ class RoomOpeningHour extends Model
     protected $casts = [
         'weekday' => 'integer',
     ];
+
+    protected $guarded = ['id'];
 }

@@ -10,4 +10,6 @@ class MessageReceiver extends Model
      * @var string
      */
     protected $table = 'chatsupport_chat_message_receivers';
+
+    protected $guarded = ['id'];
 }

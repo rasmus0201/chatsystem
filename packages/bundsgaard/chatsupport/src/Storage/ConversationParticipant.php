@@ -10,4 +10,6 @@ class ConversationParticipant extends Model
      * @var string
      */
     protected $table = 'chatsupport_chat_conversation_participants';
+
+    protected $guarded = ['id'];
 }

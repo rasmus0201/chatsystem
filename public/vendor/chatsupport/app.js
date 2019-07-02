@@ -1,9 +1,9 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([["/app"],{
 
 /***/ "../../../node_modules/popper.js/dist/esm/popper.js":
-/*!****************************************************************************!*\
-  !*** /Users/rasmus/http/chatsys/node_modules/popper.js/dist/esm/popper.js ***!
-  \****************************************************************************/
+/*!********************************************************************************!*\
+  !*** /Users/rasmus/Sites/chatsystem/node_modules/popper.js/dist/esm/popper.js ***!
+  \********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4229,8 +4229,7 @@ module.exports = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _services_cookieService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/cookieService */ "./resources/js/services/cookieService.js");
-/* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
+/* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
 //
 //
 //
@@ -4288,32 +4287,39 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
       message: '',
+      room: null,
       clients: [],
       assignedClients: [],
       currentClient: {},
       currentMessages: [],
       connection: null,
       name: 'Supporter',
-      identifier: _services_cookieService__WEBPACK_IMPORTED_MODULE_0__["default"].get('PHPSESSID'),
+      identifier: window.Chatsupport.session,
       typingTimeout: null
     };
   },
-  created: function created() {
-    this.openSocket();
-  },
+  props: ['rooms'],
   methods: {
+    setRoom: function setRoom(room) {
+      this.room = room;
+      this.openSocket();
+    },
     openSocket: function openSocket() {
-      var host = window.location.hostname;
-      var url = 'ws://' + host + '/websocket';
+      var protocol = location.protocol === 'http:' ? 'ws' : 'wss';
+      var host = protocol + '://' + window.location.hostname;
+      var url = host + '/websocket';
 
       if (host.match(/\.(test|localhost|dev)/)) {
-        var url = 'ws://' + host + ':9000';
+        var url = host + ':9000';
       }
 
       this.connection = new WebSocket(url);
@@ -4336,6 +4342,7 @@ __webpack_require__.r(__webpack_exports__);
           language: navigator.language,
           name: this.name,
           identifier: this.identifier,
+          room_id: this.room.id,
           credentials: {
             username: 'test',
             password: 'test'
@@ -4399,7 +4406,7 @@ __webpack_require__.r(__webpack_exports__);
             this.currentMessages.push({
               message: this.currentClient.name + ' har lukket chatten.',
               sender: 'System',
-              time: _services_timeService__WEBPACK_IMPORTED_MODULE_1__["default"].now()
+              time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
             });
             this.currentClient = {};
             this.$nextTick(function () {
@@ -4436,7 +4443,7 @@ __webpack_require__.r(__webpack_exports__);
         from: this.identifier,
         message: message,
         sender: this.name,
-        time: _services_timeService__WEBPACK_IMPORTED_MODULE_1__["default"].now()
+        time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
       };
       messages.push(msg);
       this.$set(this.assignedClients[this.currentClient.identifier], 'messages', messages);
@@ -4518,9 +4525,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _services_cookieService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/cookieService */ "./resources/js/services/cookieService.js");
-/* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
-/* harmony import */ var _services_websocketService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../services/websocketService */ "./resources/js/services/websocketService.js");
+/* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
+/* harmony import */ var _services_websocketService__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../services/websocketService */ "./resources/js/services/websocketService.js");
 //
 //
 //
@@ -4557,7 +4563,6 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
-
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -4569,7 +4574,7 @@ __webpack_require__.r(__webpack_exports__);
       messages: [],
       connection: null,
       name: 'Rasmus',
-      identifier: _services_cookieService__WEBPACK_IMPORTED_MODULE_0__["default"].get('PHPSESSID'),
+      identifier: window.Chatsupport.session,
       typingTimeouts: []
     };
   },
@@ -4613,7 +4618,7 @@ __webpack_require__.r(__webpack_exports__);
       this.openSocket();
     },
     openSocket: function openSocket() {
-      this.connection = _services_websocketService__WEBPACK_IMPORTED_MODULE_2__["default"]["new"]();
+      this.connection = _services_websocketService__WEBPACK_IMPORTED_MODULE_1__["default"]["new"]();
       this.connection.onopen = this.onOpen;
       this.connection.onmessage = this.onMessage;
 
@@ -4638,7 +4643,7 @@ __webpack_require__.r(__webpack_exports__);
       this.messages.push({
         message: 'Venter på betjening fra ' + this.room.name,
         sender: 'System',
-        time: _services_timeService__WEBPACK_IMPORTED_MODULE_1__["default"].now()
+        time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
       });
     },
     onMessage: function onMessage(e) {
@@ -4740,7 +4745,7 @@ __webpack_require__.r(__webpack_exports__);
         from: this.identifier,
         message: message,
         sender: this.name,
-        time: _services_timeService__WEBPACK_IMPORTED_MODULE_1__["default"].now()
+        time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
       });
       this.message = '';
       this.scroll();
@@ -4832,6 +4837,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+//
+//
+//
+//
+//
 //
 //
 //
@@ -15969,265 +15979,288 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { staticClass: "row" }, [
-    _c("div", { staticClass: "col-4" }, [
-      _c(
-        "ul",
-        { staticClass: "list-group", staticStyle: { "min-height": "400px" } },
-        [
-          _vm._l(_vm.clients, function(client, index) {
-            return _c(
-              "li",
-              {
-                key: index,
-                staticClass:
-                  "list-group-item d-flex justify-content-between align-items-center",
-                class: { active: _vm.activeClient(client.identifier) }
-              },
-              [
-                _c(
-                  "div",
-                  {
-                    staticClass: "d-flex align-items-center",
-                    on: {
-                      click: function($event) {
-                        return _vm.conversation(client)
-                      }
-                    }
-                  },
-                  [
-                    _vm.unseenMessages(client.identifier)
-                      ? _c("span", { staticClass: "indicator bg-primary mr-1" })
-                      : _vm._e(),
-                    _vm._v(" "),
-                    _c("span", [
-                      _vm._v(
-                        "\n                        " +
-                          _vm._s(client.name) +
-                          "\n                    "
-                      )
-                    ])
-                  ]
-                ),
-                _vm._v(" "),
-                _c("div", [
-                  _c("button", {
-                    staticClass: "btn btn-primary btn-sm",
-                    attrs: { type: "button" },
-                    domProps: {
-                      textContent: _vm._s(
-                        _vm.assignedTo(client.identifier) ? "Vælg" : "Forbind"
-                      )
-                    },
-                    on: {
-                      click: function($event) {
-                        return _vm.conversation(client)
-                      }
-                    }
-                  }),
-                  _vm._v(" "),
-                  _c(
-                    "button",
-                    {
-                      staticClass: "btn btn-danger btn-sm",
-                      attrs: { type: "button" },
-                      on: {
-                        click: function($event) {
-                          return _vm.ban(client)
-                        }
-                      }
-                    },
-                    [_vm._v("Ban")]
-                  )
-                ])
-              ]
-            )
-          }),
-          _vm._v(" "),
-          _vm.clients.length === 0
-            ? _c(
-                "li",
-                {
-                  staticClass:
-                    "list-group-item d-flex justify-content-between align-items-center"
-                },
-                [
-                  _vm._v(
-                    "\n                Der er ingen brugere.\n            "
-                  )
-                ]
-              )
-            : _vm._e()
-        ],
-        2
-      )
-    ]),
-    _vm._v(" "),
-    _c("div", { staticClass: "col-8" }, [
-      _c(
-        "div",
-        {
-          ref: "messagesContainer",
-          staticClass: "overflow-auto border border-primary rounded-sm",
-          staticStyle: { height: "400px" }
-        },
-        [
-          _vm.currentClient.identifier
-            ? _c(
-                "p",
-                {
-                  staticClass: "p-2 mb-0 bg-light border-bottom",
-                  staticStyle: { position: "sticky" }
-                },
-                [
-                  _vm._v(
-                    "\n                " +
-                      _vm._s(_vm.currentClient.name) +
-                      " - (" +
-                      _vm._s(_vm.currentClient.language) +
-                      ") "
-                  ),
-                  _c("small", [
-                    _vm._v(
-                      "(Session: " + _vm._s(_vm.currentClient.identifier) + ")"
-                    )
-                  ]),
-                  _vm._v(" "),
-                  _c(
-                    "button",
-                    {
-                      staticClass: "btn btn-sm btn-warning",
-                      on: {
-                        click: function($event) {
-                          return _vm.unassign(_vm.currentClient)
-                        }
-                      }
-                    },
-                    [_vm._v("Afslut")]
-                  )
-                ]
-              )
-            : _vm._e(),
-          _vm._v(" "),
-          _c(
-            "div",
-            { staticClass: "messages" },
-            [
-              _vm._l(_vm.currentMessages, function(message, index) {
-                return _c(
-                  "p",
-                  {
-                    key: index,
-                    staticClass: "p-2 mb-0 message",
-                    class: { client: message.sender !== _vm.name }
-                  },
-                  [
-                    _vm._v(
-                      "\n                    " +
-                        _vm._s(message.sender) +
-                        ": " +
-                        _vm._s(message.message)
-                    ),
-                    _c("br"),
-                    _vm._v(" "),
-                    _c("small", [_vm._v(_vm._s(message.time))])
-                  ]
-                )
-              }),
-              _vm._v(" "),
-              _vm.currentClient.typing
-                ? _c(
-                    "p",
-                    {
-                      staticClass:
-                        "p-2 mb-0 d-flex align-items-center message client"
-                    },
-                    [
-                      _c("span", { staticClass: "mr-2" }, [
-                        _vm._v(_vm._s(_vm.currentClient.name) + ":")
-                      ]),
-                      _vm._v(" "),
-                      _vm._m(0)
-                    ]
-                  )
-                : _vm._e()
-            ],
-            2
-          )
-        ]
-      ),
-      _vm._v(" "),
-      _c("div", { staticClass: "row mt-4" }, [
-        _c("div", { staticClass: "col-9" }, [
-          _c("input", {
-            directives: [
-              {
-                name: "model",
-                rawName: "v-model",
-                value: _vm.message,
-                expression: "message"
-              }
-            ],
-            staticClass: "form-control",
-            attrs: { type: "text", placeholder: "Besked" },
-            domProps: { value: _vm.message },
+  return _c(
+    "div",
+    [
+      !_vm.room
+        ? _c("rooms", {
+            attrs: { rooms: _vm.rooms },
             on: {
-              keyup: [
-                function($event) {
-                  if (
-                    !$event.type.indexOf("key") &&
-                    _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
-                  ) {
-                    return null
-                  }
-                  return _vm.sendMessage($event)
-                },
-                function($event) {
-                  return _vm.typing($event)
-                }
-              ],
-              input: function($event) {
-                if ($event.target.composing) {
-                  return
-                }
-                _vm.message = $event.target.value
+              select: function($event) {
+                return _vm.setRoom($event)
               }
             }
           })
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "col-3" }, [
-          _c(
-            "button",
-            {
-              staticClass: "btn btn-block btn-primary",
-              attrs: {
-                type: "button",
-                disabled: !_vm.currentClient.identifier
-              },
-              on: { click: _vm.sendMessage }
-            },
-            [_vm._v("Send")]
-          )
-        ])
-      ])
-    ])
-  ])
+        : _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-4" }, [
+              _c(
+                "ul",
+                {
+                  staticClass: "list-group",
+                  staticStyle: { "min-height": "400px" }
+                },
+                [
+                  _vm._l(_vm.clients, function(client, index) {
+                    return _c(
+                      "li",
+                      {
+                        key: index,
+                        staticClass:
+                          "list-group-item d-flex justify-content-between align-items-center",
+                        class: { active: _vm.activeClient(client.identifier) }
+                      },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass: "d-flex align-items-center",
+                            on: {
+                              click: function($event) {
+                                return _vm.conversation(client)
+                              }
+                            }
+                          },
+                          [
+                            _vm.unseenMessages(client.identifier)
+                              ? _c("span", {
+                                  staticClass: "indicator bg-primary mr-1"
+                                })
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _c("span", [
+                              _vm._v(
+                                "\n                            " +
+                                  _vm._s(client.name) +
+                                  "\n                        "
+                              )
+                            ])
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c("div", [
+                          _c("button", {
+                            staticClass: "btn btn-primary btn-sm",
+                            attrs: { type: "button" },
+                            domProps: {
+                              textContent: _vm._s(
+                                _vm.assignedTo(client.identifier)
+                                  ? "Vælg"
+                                  : "Forbind"
+                              )
+                            },
+                            on: {
+                              click: function($event) {
+                                return _vm.conversation(client)
+                              }
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-danger btn-sm",
+                              attrs: { type: "button" },
+                              on: {
+                                click: function($event) {
+                                  return _vm.ban(client)
+                                }
+                              }
+                            },
+                            [_vm._v("Ban")]
+                          )
+                        ])
+                      ]
+                    )
+                  }),
+                  _vm._v(" "),
+                  _vm.clients.length === 0
+                    ? _c(
+                        "li",
+                        {
+                          staticClass:
+                            "list-group-item d-flex justify-content-between align-items-center"
+                        },
+                        [
+                          _vm._v(
+                            "\n                    Der er ingen brugere.\n                "
+                          )
+                        ]
+                      )
+                    : _vm._e()
+                ],
+                2
+              )
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "col-8" }, [
+              _c(
+                "div",
+                {
+                  ref: "messagesContainer",
+                  staticClass: "overflow-auto border border-primary rounded-sm",
+                  staticStyle: { height: "400px" }
+                },
+                [
+                  _vm.currentClient.identifier
+                    ? _c(
+                        "p",
+                        {
+                          staticClass: "p-2 mb-0 bg-light border-bottom",
+                          staticStyle: { position: "sticky" }
+                        },
+                        [
+                          _vm._v(
+                            "\n                    " +
+                              _vm._s(_vm.currentClient.name) +
+                              " - (" +
+                              _vm._s(_vm.currentClient.language) +
+                              ") "
+                          ),
+                          _c("small", [
+                            _vm._v(
+                              "(Session: " +
+                                _vm._s(_vm.currentClient.identifier) +
+                                ")"
+                            )
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-sm btn-warning",
+                              on: {
+                                click: function($event) {
+                                  return _vm.unassign(_vm.currentClient)
+                                }
+                              }
+                            },
+                            [_vm._v("Afslut")]
+                          )
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c(
+                    "div",
+                    { staticClass: "messages" },
+                    [
+                      _vm._l(_vm.currentMessages, function(message, index) {
+                        return _c(
+                          "p",
+                          {
+                            key: index,
+                            staticClass: "p-2 mb-0 message",
+                            class: { client: message.sender !== _vm.name }
+                          },
+                          [
+                            _vm._v(
+                              "\n                        " +
+                                _vm._s(message.sender) +
+                                ": " +
+                                _vm._s(message.message)
+                            ),
+                            _c("br"),
+                            _vm._v(" "),
+                            _c("small", [_vm._v(_vm._s(message.time))])
+                          ]
+                        )
+                      }),
+                      _vm._v(" "),
+                      _vm.currentClient.typing
+                        ? _c(
+                            "p",
+                            {
+                              staticClass:
+                                "p-2 mb-0 d-flex align-items-center message client"
+                            },
+                            [
+                              _c("span", { staticClass: "mr-2" }, [
+                                _vm._v(_vm._s(_vm.currentClient.name) + ":")
+                              ]),
+                              _vm._v(" "),
+                              _c("span", { staticClass: "lds-ellipsis" }, [
+                                _c("span"),
+                                _vm._v(" "),
+                                _c("span"),
+                                _vm._v(" "),
+                                _c("span")
+                              ])
+                            ]
+                          )
+                        : _vm._e()
+                    ],
+                    2
+                  )
+                ]
+              ),
+              _vm._v(" "),
+              _c("div", { staticClass: "row mt-4" }, [
+                _c("div", { staticClass: "col-9" }, [
+                  _c("input", {
+                    directives: [
+                      {
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.message,
+                        expression: "message"
+                      }
+                    ],
+                    staticClass: "form-control",
+                    attrs: { type: "text", placeholder: "Besked" },
+                    domProps: { value: _vm.message },
+                    on: {
+                      keyup: [
+                        function($event) {
+                          if (
+                            !$event.type.indexOf("key") &&
+                            _vm._k(
+                              $event.keyCode,
+                              "enter",
+                              13,
+                              $event.key,
+                              "Enter"
+                            )
+                          ) {
+                            return null
+                          }
+                          return _vm.sendMessage($event)
+                        },
+                        function($event) {
+                          return _vm.typing($event)
+                        }
+                      ],
+                      input: function($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.message = $event.target.value
+                      }
+                    }
+                  })
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "col-3" }, [
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-block btn-primary",
+                      attrs: {
+                        type: "button",
+                        disabled: !_vm.currentClient.identifier
+                      },
+                      on: { click: _vm.sendMessage }
+                    },
+                    [_vm._v("Send")]
+                  )
+                ])
+              ])
+            ])
+          ])
+    ],
+    1
+  )
 }
-var staticRenderFns = [
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("span", { staticClass: "lds-ellipsis" }, [
-      _c("span"),
-      _vm._v(" "),
-      _c("span"),
-      _vm._v(" "),
-      _c("span")
-    ])
-  }
-]
+var staticRenderFns = []
 render._withStripped = true
 
 
@@ -16413,30 +16446,47 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    _vm._l(_vm.rooms, function(room, index) {
-      return _c("div", { key: index + "-room", staticClass: "card mb-2" }, [
-        _c("div", { staticClass: "card-body" }, [
-          _c("h5", { staticClass: "card-title" }, [_vm._v(_vm._s(room.name))]),
-          _vm._v(" "),
-          _c(
-            "button",
-            {
-              staticClass: "btn btn-primary",
-              on: {
-                click: function($event) {
-                  return _vm.select(room)
+    [
+      _vm._l(_vm.rooms, function(room, index) {
+        return _c("div", { key: index + "-room", staticClass: "card mb-2" }, [
+          _c("div", { staticClass: "card-body" }, [
+            _c("p", { staticClass: "card-title" }, [_vm._v(_vm._s(room.name))]),
+            _vm._v(" "),
+            _c(
+              "button",
+              {
+                staticClass: "btn btn-primary",
+                on: {
+                  click: function($event) {
+                    return _vm.select(room)
+                  }
                 }
-              }
-            },
-            [_vm._v("Start chat")]
-          )
+              },
+              [_vm._v("Start chat")]
+            )
+          ])
         ])
-      ])
-    }),
-    0
+      }),
+      _vm._v(" "),
+      !_vm.rooms.length
+        ? _c("div", { staticClass: "card mb-2" }, [_vm._m(0)])
+        : _vm._e()
+    ],
+    2
   )
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "card-body" }, [
+      _c("p", { staticClass: "card-title" }, [
+        _vm._v("Ingen tilgængelige chats")
+      ])
+    ])
+  }
+]
 render._withStripped = true
 
 
@@ -16646,7 +16696,7 @@ if (token) {
   window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
 
-new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
+var app = new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
   el: '#app'
 });
 
@@ -16894,51 +16944,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/services/cookieService.js":
-/*!************************************************!*\
-  !*** ./resources/js/services/cookieService.js ***!
-  \************************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return CookieService; });
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var CookieService =
-/*#__PURE__*/
-function () {
-  function CookieService() {
-    _classCallCheck(this, CookieService);
-  }
-
-  _createClass(CookieService, null, [{
-    key: "get",
-    value: function get(key) {
-      var pair = document.cookie.split(';').find(function (x) {
-        return x.startsWith(key + '=');
-      });
-
-      if (!pair) {
-        return;
-      }
-
-      return pair.split('=')[1];
-    }
-  }]);
-
-  return CookieService;
-}();
-
-
-
-/***/ }),
-
 /***/ "./resources/js/services/timeService.js":
 /*!**********************************************!*\
   !*** ./resources/js/services/timeService.js ***!
@@ -17053,8 +17058,8 @@ function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

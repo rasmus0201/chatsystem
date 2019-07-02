@@ -20,5 +20,7 @@ Route::get('/', function () {
 });
 
 Route::get('/agent', function (){
-    return view('chatsupport::agent');
+    return view('chatsupport::agent', [
+        'rooms' => Room::all()
+    ]);
 });

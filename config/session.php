@@ -31,7 +31,7 @@ return [
     |
     */
 
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    'lifetime' => env('SESSION_LIFETIME', 9999999),
 
     'expire_on_close' => false,
 
@@ -111,7 +111,7 @@ return [
     |
     */
 
-    'lottery' => [2, 100],
+    'lottery' => [1, 100],
 
     /*
     |--------------------------------------------------------------------------
@@ -179,7 +179,7 @@ return [
     |
     */
 
-    'http_only' => true,
+    'http_only' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -194,6 +194,6 @@ return [
     |
     */
 
-    'same_site' => null,
+    'same_site' => 'strict',
 
 ];

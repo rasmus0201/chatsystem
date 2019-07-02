@@ -11,16 +11,25 @@ class UserListResponder extends Responder
      */
     public function respond()
     {
-        $users = $this->connections->getUnique();
+        $uniqueSessions = [];
 
-        $sessions = array_values(array_map(function($user) {
-            return $user->session;
-        }, $users));
+        $connections = array_filter($this->connections, function($connection) use (&$uniqueSessions) {
+            $sessionId = $connection->session['identifier'];
+
+            if (isset($uniqueSessions[$sessionId])) {
+                return false;
+            }
+
+            $uniqueSessions[$sessionId] = true;
+            return true;
+        });
+
+        $sessions = array_column($connections, 'session');
 
         foreach ($this->receivers as $to) {
             $to->send(json_encode([
                 'type' => $this->eventType,
-                'message' => 'List of connected users',
+                'message' => 'List of connections in room',
                 'data' => ['users' => $sessions]
             ]));
         }

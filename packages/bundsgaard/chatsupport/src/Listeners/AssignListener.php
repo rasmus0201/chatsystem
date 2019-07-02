@@ -16,8 +16,12 @@ class AssignListener
      */
     public function handle(MessageEvent $event)
     {
+        // TODO Make sure only agents are allowed to do this.
+
         // Get the connections to send to
         $connections = $event->connections->get($event->data->to);
+
+        // TODO Store this in DB
         foreach ($connections as $to) {
             $to->send(json_encode([
                 'type' => $this->eventType,

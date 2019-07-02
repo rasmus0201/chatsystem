@@ -64,10 +64,9 @@ class CreateChatsupportTables extends Migration
             $table->integer('room_id')->nullable();
             $table->integer('status_id');
             $table->integer('user_id')->nullable();
-            $table->string('session_id')->unique();
+            $table->string('session_id'); /* user can be user and agent the same session ->unique();*/
             $table->boolean('agent')->default(false);
             $table->string('name');
-            $table->string('email')->nullable();
             $table->string('language')->nullable();
             $table->string('user_agent')->nullable();
             $table->string('ip')->nullable();

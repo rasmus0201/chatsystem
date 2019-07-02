@@ -16,6 +16,6 @@ if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
 
-new Vue({
+const app = new Vue({
     el: '#app',
 });

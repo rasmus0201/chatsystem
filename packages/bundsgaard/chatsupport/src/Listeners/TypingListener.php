@@ -17,7 +17,7 @@ class TypingListener
     public function handle(MessageEvent $event)
     {
         // Get the connections to send to
-        $connections = $event->connections->getAll($event->data->to);
+        $connections = $event->connections->get($event->data->to);
 
         foreach ($connections as $to) {
             $to->send(json_encode([

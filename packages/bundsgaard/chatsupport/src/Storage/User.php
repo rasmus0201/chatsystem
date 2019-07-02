@@ -15,13 +15,20 @@ class User extends Model
         'agent' => 'boolean'
     ];
 
+    protected $guarded = ['id'];
+
     public function conversations()
     {
-        $this->hasMany(Conversations::class);
+        return $this->hasMany(Conversations::class);
     }
 
     public function activeConversations()
     {
-        $this->hasMany(Conversations::class)->whereNull('closed_at');
+        return $this->hasMany(Conversations::class)->whereNull('closed_at');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(UserStatus::class);
     }
 }
