@@ -3,6 +3,7 @@
 namespace Bundsgaard\ChatSupport\Listeners;
 
 use Bundsgaard\ChatSupport\Events\MessageEvent;
+use Bundsgaard\ChatSupport\Storage\Conversation;
 
 class AssignListener
 {
@@ -16,7 +17,7 @@ class AssignListener
      */
     public function handle(MessageEvent $event)
     {
-        if (!isset($event->connection->user)) {
+        if (!isset($event->connection->user, $event->data->conversation_id)) {
             return;
         }
 
@@ -24,17 +25,36 @@ class AssignListener
             return;
         }
 
-        // TODO Check if user is participant in conversation
-        // If so set the disconnected_at=null, connected_at=now
-        // else create a new participant
+        if (!$conversation = Conversation::find($event->data->conversation_id)) {
+            return;
+        }
 
-        // TODO Create new message - "You got assigned"
-        // Set the data for it, and create the receivers from active participants
+        $agent = $event->connection->user;
 
-        // TODO Send the DB Message to all active participants (with new structure)
+        if (!$participant = $conversation->participants()->where('user_id', $agent->id)->get()) {
+            $participant = $conversation->participants()->create([
+                'user_id' => $agent->id
+            ]);
+        }
+
+        // Update the connected_at/disconnected_at
+        $participant->connected_at = new \DateTime();
+        $participant->disconnected_at = null;
+        $participant->save();
+
+        // Create new message - "You got assigned"
+        $message = $conversation->messages()->create([
+            'system' => 1,
+            'message' => 'Du bliver nu betjent af ' . $agent->name
+        ]);
+
+        // Set the receiver to the user who initiated the conversation
+        $message->receivers()->create([
+            'user_id' => $conversation->user_id
+        ]);
 
         // Get the connections to send to
-        $connections = $event->connections->get($event->data->to);
+        $connections = $event->connections->getByUserId($conversation->user_id);
 
         // TODO Store this in DB
         foreach ($connections as $to) {
@@ -42,12 +62,8 @@ class AssignListener
                 'type' => $this->eventType,
                 'message' => 'You got assigned',
                 'data' => [
-                    'assignee' => [
-                        'name' => $event->connection->session['name'],
-                        'identifier' => $event->connection->session['identifier'],
-                        'typing' => $event->connection->session['typing'],
-                    ],
-                    'time' => date('H:i:s')
+                    'conversation_id' => $conversation->user_id,
+                    'message' => $message->with(['from'])->get()
                 ]
             ]));
         }

@@ -268,8 +268,8 @@
                     this.send({
                         type: 'assign',
                         data: {
-                            assignee: this.identifier,
-                            conversation: conversation.id
+                            // assignee: this.identifier,
+                            conversation_id: conversation.id
                         }
                     });
 

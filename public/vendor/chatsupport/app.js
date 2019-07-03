@@ -4525,8 +4525,8 @@ __webpack_require__.r(__webpack_exports__);
         this.send({
           type: 'assign',
           data: {
-            assignee: this.identifier,
-            conversation: conversation.id
+            // assignee: this.identifier,
+            conversation_id: conversation.id
           }
         });
         conversation.messages = [];

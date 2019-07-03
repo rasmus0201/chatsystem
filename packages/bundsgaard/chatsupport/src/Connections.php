@@ -37,6 +37,25 @@ class Connections
         });
     }
 
+    /**
+     * Method to get connections by user id.
+     * Can ethier take a single user id, or an array of user ids.
+     *
+     * @param integer|integer[] $userId
+     */
+    public function getByUserId($userId)
+    {
+        if (!is_array($userId)) {
+            $userId = [$userId];
+        }
+
+        $userId = array_unique($userId);
+
+        return array_filter($this->connections, function($connection) use ($userId) {
+            return in_array($connection->session->user->id, $userId);
+        });
+    }
+
     private function findActive($user, $agent, $roomId)
     {
         return $user->agent === $agent && $user->room_id === $roomId && $user->status->priority >= 8;
