@@ -52,7 +52,7 @@ class Connections
         $userId = array_unique($userId);
 
         return array_filter($this->connections, function($connection) use ($userId) {
-            return in_array($connection->session->user->id, $userId);
+            return in_array($connection->user->id, $userId);
         });
     }
 

@@ -53,6 +53,18 @@ class ServerCommand extends Command
             9000
         );
 
+        // TODO https://github.com/ratchetphp/Ratchet/issues/650#issuecomment-390548074
+        // https://stackoverflow.com/questions/31375492/how-to-define-a-route-when-using-ratchet-web-socket
+        // https://gist.github.com/cboden/3119135
+        // Create routes for each room.
+        // Optionally create routes for each conversation in room.
+        // Maybe look at the WAMP / PubSub
+        //
+        // http://socketo.me/docs/wamp  http://socketo.me/docs/sessions
+        // https://eole-io.github.io/sandstone-doc/examples/multichannel-chat.html
+
+        // $server->route('/dog', $chat, ['*']);
+
         $server->run();
     }
 }

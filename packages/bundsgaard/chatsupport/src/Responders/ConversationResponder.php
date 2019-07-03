@@ -19,7 +19,6 @@ class ConversationResponder extends Responder
 
         $receiver = $this->receivers[0];
         $conversation = $this->conversation;
-
         $messages = $conversation->messages()->with(['from']);
 
         $receiver->send(json_encode([

@@ -4777,11 +4777,7 @@ __webpack_require__.r(__webpack_exports__);
           }
 
           this.clients.push(data.assignee);
-          this.messages.push({
-            message: 'Du bliver nu betjent af ' + data.assignee.name,
-            sender: 'System',
-            time: data.time
-          });
+          this.messages.push(data.message);
           this.scroll();
           break;
 

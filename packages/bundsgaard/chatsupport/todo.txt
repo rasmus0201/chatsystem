@@ -1,0 +1,13 @@
+Actions:
+    session:connect
+    session:login
+    room:join
+    room:leave
+    message:send
+    message:receive
+    conversation:list (only agent)
+    conversation:join (only agents)
+    conversation:leave
+
+Chat rooms:
+    Refactor to use routes
