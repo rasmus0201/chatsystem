@@ -7,9 +7,9 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 use Bundsgaard\ChatSupport\Responders\ConversationListResponder;
 use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
-class SessionRoomListener
+class RoomJoinListener
 {
-    public $eventType = 'session:room';
+    public $eventType = 'room:join';
 
     private $conversationListResponder;
     private $conversationResponder;

@@ -18,7 +18,7 @@ class MessageListener
     {
         // Get the connections to send to
         $connectionsTo = $event->connections->get($event->data->to);
-        $connectionsFrom = $event->connections->get($event->connection->session['identifier']);
+        $connectionsFrom = $event->connections->get($event->connection->session['session_id']);
 
         // Note: If a to/from connection is present in both arrays
         // a user will receive the message twice.
@@ -35,7 +35,7 @@ class MessageListener
                 'type' => $this->eventType,
                 'message' => 'New message',
                 'data' => [
-                    'from' => $event->connection->session['identifier'],
+                    'from' => $event->connection->session['session_id'],
                     'sender' => $event->connection->session['name'],
                     'time' => date('H:i:s'),
                     'message' => $event->data->message

@@ -27,7 +27,7 @@ class Chat implements MessageComponentInterface
             'typing' => false,
             'agent' => false,
             'room_id' => null,
-            'identifier' => null,
+            'session_id' => null,
             'name' => null,
             'language' => null,
         ];

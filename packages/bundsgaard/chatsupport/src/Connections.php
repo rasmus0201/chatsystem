@@ -30,10 +30,10 @@ class Connections
         });
     }
 
-    public function get($identifier)
+    public function get($sessionId)
     {
-        return array_filter($this->connections, function($connection) use ($identifier) {
-            return $connection->session['identifier'] === $identifier;
+        return array_filter($this->connections, function($connection) use ($sessionId) {
+            return $connection->session['session_id'] === $sessionId;
         });
     }
 

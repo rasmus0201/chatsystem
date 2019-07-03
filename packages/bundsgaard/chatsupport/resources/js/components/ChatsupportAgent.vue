@@ -29,7 +29,7 @@
                         <button class="btn btn-sm btn-warning" v-on:click="unassign(activeConversation)">Afslut</button>
                     </p>
                     <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== identifier) }" v-for="(message, index) in activeConversation.messages" :key="index">
+                        <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== session_id) }" v-for="(message, index) in activeConversation.messages" :key="index">
                             {{ message.system ? 'System' : message.from.name }}: {{ message.message }}<br>
                             <small>{{ format(message.created_at) }}</small>
                         </p>
@@ -66,7 +66,7 @@
         data() {
             return {
                 connection: null,
-                identifier: window.Chatsupport.session,
+                session_id: window.Chatsupport.session,
                 name: 'Supporter',
 
                 message: '',
@@ -141,7 +141,7 @@
                     data: {
                         language: navigator.language,
                         name: this.name,
-                        identifier: this.identifier,
+                        session_id: this.session_id,
                         credentials: {
                             username: 'test',
                             password: 'test'
@@ -231,7 +231,7 @@
 
                 var messages = this.assignedConversations[c_id].messages;
                 var msg = {
-                    from: this.identifier,
+                    from: this.session_id,
                     message: message,
                     sender: this.name,
                     time: TimeService.now()
@@ -257,7 +257,7 @@
                     this.send({
                         type: 'typing',
                         data: {
-                            to: client.identifier
+                            to: client.session_id
                         }
                     });
                 }
@@ -268,7 +268,7 @@
                     this.send({
                         type: 'assign',
                         data: {
-                            // assignee: this.identifier,
+                            // assignee: this.session_id,
                             conversation_id: conversation.id
                         }
                     });
@@ -288,8 +288,8 @@
                 this.send({
                     type: 'unassign',
                     data: {
-                        assignee: this.identifier,
-                        to: client.identifier
+                        assignee: this.session_id,
+                        to: client.session_id
                     }
                 });
 
@@ -313,9 +313,9 @@
                 return this.assignedConversations[id].unseen === true;
             },
 
-            getClientIndex(identifier) {
+            getClientIndex(session_id) {
                 for (var i = 0; i < this.activeClients.length; i++) {
-                    if (identifier === this.activeClients[i].identifier) {
+                    if (session_id === this.activeClients[i].session_id) {
                         return i;
                     }
                 }
@@ -323,19 +323,19 @@
                 return undefined;
             },
 
-            setTyper(identifier) {
-                this.typingTimeouts[identifier] = setTimeout(function() {
-                    this.clearTyper(identifier);
+            setTyper(session_id) {
+                this.typingTimeouts[session_id] = setTimeout(function() {
+                    this.clearTyper(session_id);
                 }.bind(this), 1000);
 
-                var index = this.getClientIndex(identifier);
+                var index = this.getClientIndex(session_id);
                 this.activeClients[index].typing = true;
             },
 
-            clearTyper(identifier) {
-                clearTimeout(this.typingTimeouts[identifier]);
+            clearTyper(session_id) {
+                clearTimeout(this.typingTimeouts[session_id]);
 
-                var index = this.getClientIndex(identifier);
+                var index = this.getClientIndex(session_id);
                 this.activeClients[index].typing = false;
             },
 

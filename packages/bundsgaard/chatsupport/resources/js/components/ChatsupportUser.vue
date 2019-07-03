@@ -1,116 +1,46 @@
 <template>
     <div>
-        <rooms :rooms="rooms" @select="setRoom($event)" v-if="!room"></rooms>
-        <div class="row" v-else>
-            <div class="col-12">
-                <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
-                    <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== identifier) }" v-for="(message, index) in messages" :key="index + '-message'">
-                            {{ message.system ? 'System' : message.from.name }}: {{ message.message }}<br>
-                            <small>{{ format(message.created_at) }}</small>
-                        </p>
+        <rooms :rooms="rooms" @select="setRoom($event)" v-if="!user.room.id"></rooms>
+        <chat-window v-else
+            ref="chat"
+            :user="user"
+            :conversation="conversation"
+            @conversation:leave="leave($event)"
+            @message:send="sendMessage($event)"
+            @message:type="send($event)">
 
-                        <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
-                            <span class="mr-2">{{ client.name }}:</span>
-
-                            <span class="lds-ellipsis">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-                        </p>
-                    </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-9">
-                        <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
-                    </div>
-                    <div class="col-3">
-                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!clients.length">Send</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </chat-window>
     </div>
 </template>
 
 <script>
     import TimeService from '../services/timeService';
-    import WebSocketService from '../services/websocketService';
+    import commonChat from '../services/commonChat';
 
     export default {
+        mixins: [commonChat],
         data() {
             return {
-                message: '',
-
-                room: null,
-
-                clients: [],
-                messages: [],
                 connection: null,
-
-                name: 'Rasmus',
-                identifier: window.Chatsupport.session,
-
-                typingTimeouts: []
+                user: {
+                    room: {},
+                    name: 'Rasmus',
+                    session_id: window.Chatsupport.session
+                },
+                conversation: {},
+                typingTimeouts: [],
             }
         },
 
         props: ['rooms'],
 
-        computed: {
-            typingClients () {
-                var typing = [];
-
-                for (const client of this.clients) {
-                    if (client.typing) {
-                        typing.push(client);
-                    }
-                }
-
-                return typing;
-            }
-        },
-
         created() {
+            this.reset();
+
             this.openSocket();
         },
 
         methods: {
-            format: TimeService.format,
-
-            setRoom(room) {
-                this.room = room;
-
-                this.send({
-                    type: 'session:room',
-                    data: {
-                        room_id: this.room.id,
-                    }
-                });
-            },
-
-            openSocket() {
-                this.connection = WebSocketService.new();
-
-                this.connection.onopen = this.onOpen;
-                this.connection.onmessage = this.onMessage;
-
-                this.connection.onclose = function(e) { console.log(e, 'CLOSE'); };
-                this.connection.onerror = function(e) { console.log(e, 'ERROR'); };
-            },
-
-            onOpen(e) {
-                this.send({
-                    type: 'session:connect',
-                    data: {
-                        language: navigator.language,
-                        name: this.name,
-                        identifier: this.identifier
-                    }
-                });
-            },
-
             onMessage(e) {
                 var {type, data} = JSON.parse(e.data);
 
@@ -129,8 +59,8 @@
                         this.room = { id: data.room_id };
                         break;
                     case 'conversation':
-                        this.messages = data.messages;
-                        this.room = { id: data.room_id };
+                        this.conversation = Object.assign(this.conversation, data.conversation);
+                        this.user.room = { id: data.room_id };
 
                         break;
                     case 'typing':
@@ -144,7 +74,7 @@
 
                         break;
                     case 'assign':
-                        if (this.assignedTo(data.assignee.identifier)) {
+                        if (this.assignedTo(data.assignee.session_id)) {
                             return;
                         }
 
@@ -154,11 +84,11 @@
 
                         break;
                     case 'unassign':
-                        if (!this.assignedTo(data.assignee.identifier)) {
+                        if (!this.assignedTo(data.assignee.session_id)) {
                             return;
                         }
 
-                        this.unassign(data.assignee.identifier);
+                        this.unassign(data.assignee.session_id);
                         this.messages.push({
                             message: data.assignee.name + ' har forladt chatten.',
                             sender: 'System',
@@ -170,60 +100,9 @@
                 }
             },
 
-            send(data) {
-                this.connection.send(JSON.stringify(data));
-            },
-
-            sendMessage() {
-                var message = this.message.trim();
-
-                if (message === '' || !this.clients.length) {
-                    return;
-                }
-
-                for (const client of this.clients) {
-                    this.send({
-                        type: 'message',
-                        data: {
-                            message: message,
-                            to: client.identifier
-                        }
-                    });
-                }
-
-                this.messages.push({
-                    from: this.identifier,
-                    message: message,
-                    sender: this.name,
-                    time: TimeService.now()
-                });
-                this.message = '';
-
-                this.scroll();
-            },
-
-            typing: _.throttle(function(e) {
-                if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter') {
-                    return;
-                }
-
-                if (!this.clients.length) {
-                    return;
-                }
-
-                for (const client of this.clients) {
-                    this.send({
-                        type: 'typing',
-                        data: {
-                            to: client.identifier
-                        }
-                    });
-                }
-            }, 350),
-
-            getClientIndex(identifier) {
+            getClientIndex(session_id) {
                 for (var i = 0; i < this.clients.length; i++) {
-                    if (identifier === this.clients[i].identifier) {
+                    if (session_id === this.clients[i].session_id) {
                         return i;
                     }
                 }
@@ -231,36 +110,24 @@
                 return undefined;
             },
 
-            assignedTo(identifier) {
-                return (identifier === 'SYSTEM') || (typeof this.getClientIndex(identifier) !== 'undefined');
+            assignedTo(session_id) {
+                return (session_id === 'SYSTEM') || (typeof this.getClientIndex(session_id) !== 'undefined');
             },
 
-            unassign(identifier) {
-                var index = this.getClientIndex(identifier);
-
-                this.$delete(this.clients, index);
+            leave(event) {
+                // TODO Make this (closes the conversation)
+                this.send(event);
+                this.reset();
             },
 
-            setTyper(identifier) {
-                this.typingTimeouts[identifier] = setTimeout(function() {
-                    this.clearTyper(identifier);
-                }.bind(this), 1000);
+            reset() {
+                this.conversation = {};
+                this.$set(this.conversation, 'messages', []);
+                this.$set(this.conversation, 'clients', []);
+                this.$set(this.conversation, 'typingClients', []);
 
-                var index = this.getClientIndex(identifier);
-                this.clients[index].typing = true;
-            },
-
-            clearTyper(identifier) {
-                clearTimeout(this.typingTimeouts[identifier]);
-
-                var index = this.getClientIndex(identifier);
-                this.clients[index].typing = false;
-            },
-
-            scroll() {
-                this.$nextTick(() => {
-                    this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-                });
+                this.typingTimeouts = [];
+                this.user.room = {};
             }
         },
     }

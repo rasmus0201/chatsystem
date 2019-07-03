@@ -18,7 +18,7 @@ class UserListResponder extends Responder
         $uniqueSessions = [];
 
         $connections = array_filter($this->connections, function($connection) use (&$uniqueSessions) {
-            $sessionId = $connection->session['identifier'];
+            $sessionId = $connection->session['session_id'];
 
             if (isset($uniqueSessions[$sessionId])) {
                 return false;

@@ -29,7 +29,7 @@ class UnassignListener
                 'data' => [
                     'assignee' => [
                         'name' => $event->connection->session['name'],
-                        'identifier' => $event->connection->session['identifier']
+                        'session_id' => $event->connection->session['session_id']
                     ],
                     'time' => date('H:i:s')
                 ]
