@@ -15,6 +15,15 @@ class User extends Model
         'agent' => 'boolean'
     ];
 
+    protected $hidden = [
+        'id',
+        'room_id',
+        'agent',
+        'user_id',
+        'created_at',
+        'updated_at',
+    ];
+
     protected $guarded = ['id'];
 
     public function conversations()

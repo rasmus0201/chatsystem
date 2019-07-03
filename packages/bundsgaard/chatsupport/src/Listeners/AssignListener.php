@@ -16,7 +16,22 @@ class AssignListener
      */
     public function handle(MessageEvent $event)
     {
-        // TODO Make sure only agents are allowed to do this.
+        if (!isset($event->connection->user)) {
+            return;
+        }
+
+        if (!$event->connection->user->agent) {
+            return;
+        }
+
+        // TODO Check if user is participant in conversation
+        // If so set the disconnected_at=null, connected_at=now
+        // else create a new participant
+
+        // TODO Create new message - "You got assigned"
+        // Set the data for it, and create the receivers from active participants
+
+        // TODO Send the DB Message to all active participants (with new structure)
 
         // Get the connections to send to
         $connections = $event->connections->get($event->data->to);

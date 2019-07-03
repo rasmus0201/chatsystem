@@ -5,6 +5,7 @@ return [
         'Bundsgaard\ChatSupport\Events\OpenEvent' => [],
         'Bundsgaard\ChatSupport\Events\MessageEvent' => [
             'Bundsgaard\ChatSupport\Listeners\SessionConnectListener',
+            'Bundsgaard\ChatSupport\Listeners\SessionRoomListener',
             'Bundsgaard\ChatSupport\Listeners\AssignListener',
             'Bundsgaard\ChatSupport\Listeners\UnassignListener',
             'Bundsgaard\ChatSupport\Listeners\TypingListener',

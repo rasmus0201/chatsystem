@@ -11,6 +11,10 @@ class UserListResponder extends Responder
      */
     public function respond()
     {
+        // TODO
+        // Refactor this to be called conversation list
+        // and get conversations from db then link the conversation users to active connections
+
         $uniqueSessions = [];
 
         $connections = array_filter($this->connections, function($connection) use (&$uniqueSessions) {

@@ -13,9 +13,22 @@ class Conversation extends Model
 
     protected $guarded = ['id'];
 
+    protected $hidden = [
+        'user_id',
+        'room_id',
+        'closed_at',
+        'created_at',
+        'updated_at',
+    ];
+
     private $newMessage = [
         'excludes' => [],
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function messages()
     {

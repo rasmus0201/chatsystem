@@ -4,38 +4,38 @@
         <div class="row" v-else>
             <div class="col-4">
                 <ul class="list-group" style="min-height: 400px;">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" :class="{ 'active': activeClient(client.identifier) }" v-for="(client, index) in clients" :key="index">
-                        <div class="d-flex align-items-center" v-on:click="conversation(client)">
-                            <span v-if="unseenMessages(client.identifier)" class="indicator bg-primary mr-1"></span>
+                    <li class="list-group-item d-flex justify-content-between align-items-center" :class="{ 'active': isActiveConversation(conversation.id) }" v-for="(conversation, index) in conversations" :key="index">
+                        <div class="d-flex align-items-center" v-on:click="assign(conversation)">
+                            <span v-if="unseenMessages(conversation.id)" class="indicator bg-primary mr-1"></span>
                             <span>
-                                {{ client.name }}
+                                {{ conversation.user.name }}
                             </span>
                         </div>
 
                         <div>
-                            <button type="button" class="btn btn-primary btn-sm" v-on:click="conversation(client)" v-text="assignedTo(client.identifier) ? 'Vælg' : 'Forbind'"></button>
+                            <button type="button" class="btn btn-primary btn-sm" v-on:click="assign(conversation)" v-text="assignedTo(conversation.id) ? 'Vælg' : 'Forbind'"></button>
                             <button type="button" class="btn btn-danger btn-sm" v-on:click="ban(client)">Ban</button>
                         </div>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center" v-if="clients.length === 0">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" v-if="conversations.length === 0">
                         Der er ingen brugere.
                     </li>
                 </ul>
             </div>
             <div class="col-8">
                 <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
-                    <p class="p-2 mb-0 bg-light border-bottom" v-if="currentClient.identifier" style="position: sticky;">
-                        {{ currentClient.name }} - ({{ currentClient.language }}) <small>(Session: {{ currentClient.identifier }})</small>
-                        <button class="btn btn-sm btn-warning" v-on:click="unassign(currentClient)">Afslut</button>
+                    <p class="p-2 mb-0 bg-light border-bottom" v-if="activeConversation.id" style="position: sticky;">
+                        {{ activeConversation.user.name }} - ({{ activeConversation.user.language }}) <small>(Session: {{ activeConversation.user.session_id }})</small>
+                        <button class="btn btn-sm btn-warning" v-on:click="unassign(activeConversation)">Afslut</button>
                     </p>
                     <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in currentMessages" :key="index">
-                            {{ message.sender }}: {{ message.message }}<br>
-                            <small>{{ message.time }}</small>
+                        <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== identifier) }" v-for="(message, index) in activeConversation.messages" :key="index">
+                            {{ message.system ? 'System' : message.from.name }}: {{ message.message }}<br>
+                            <small>{{ format(message.created_at) }}</small>
                         </p>
 
-                        <p class="p-2 mb-0 d-flex align-items-center message client" v-if="currentClient.typing">
-                            <span class="mr-2">{{ currentClient.name }}:</span>
+                        <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
+                            <span class="mr-2">{{ client.name }}:</span>
 
                             <span class="lds-ellipsis">
                                 <span></span>
@@ -50,7 +50,7 @@
                         <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="sendMessage" v-on:keyup="typing($event)">
                     </div>
                     <div class="col-3">
-                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!currentClient.identifier">Send</button>
+                        <button type="button" class="btn btn-block btn-primary" v-on:click="sendMessage" :disabled="!activeConversation.id">Send</button>
                     </div>
                 </div>
             </div>
@@ -65,30 +65,54 @@
     export default {
         data() {
             return {
-                message: '',
+                connection: null,
+                identifier: window.Chatsupport.session,
+                name: 'Supporter',
 
+                message: '',
                 room: null,
 
-                clients: [],
-                assignedClients: [],
-                currentClient: {},
-                currentMessages: [],
-                connection: null,
+                conversations: [],
+                assignedConversations: [],
+                activeConversation: {},
+                activeClients: [],
 
-                name: 'Supporter',
-                identifier: window.Chatsupport.session,
-
-                typingTimeout: null
+                typingTimeouts: []
             }
         },
 
         props: ['rooms'],
 
+        computed: {
+            typingClients () {
+                var typing = [];
+
+                for (const client of this.activeClients) {
+                    if (client.typing) {
+                        typing.push(client);
+                    }
+                }
+
+                return typing;
+            }
+        },
+
+        created() {
+            this.openSocket();
+        },
+
         methods: {
+            format: TimeService.format,
+
             setRoom(room) {
                 this.room = room;
 
-                this.openSocket();
+                this.send({
+                    type: 'session:room',
+                    data: {
+                        room_id: this.room.id,
+                    }
+                });
             },
 
             openSocket() {
@@ -118,7 +142,6 @@
                         language: navigator.language,
                         name: this.name,
                         identifier: this.identifier,
-                        room_id: this.room.id,
                         credentials: {
                             username: 'test',
                             password: 'test'
@@ -132,72 +155,56 @@
 
                 switch (type) {
                     case 'message':
-                        if (!this.assignedTo(data.from)) {
+                        const c_id = data.conversation_id;
+
+                        if (!this.assignedTo(c_id)) {
                             return;
                         }
 
-                        if (!this.activeClient(data.from)) {
-                            this.$set(this.assignedClients[data.from], 'unseen', true);
-
+                        if (!this.isActiveConversation(c_id)) {
+                            this.$set(this.assignedConversations[c_id], 'unseen', true);
                             this.$forceUpdate();
                         }
 
-                        var messages = this.assignedClients[data.from].messages;
-                        messages.push(data);
+                        var messages = this.assignedConversations[c_id].messages;
+                        messages.push(data.message);
+                        this.$set(this.assignedConversations[c_id], 'messages', messages);
 
-                        this.$set(this.assignedClients[data.from], 'messages', messages);
+                        this.messages.push(data);
+                        this.clearTyper(data.message.user.session_id);
+                        this.scroll();
 
-                        clearTimeout(this.typingTimeout);
-                        this.currentClient.typing = false;
-
-                        this.$nextTick(() => {
-                            this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-                        });
-
+                        break;
+                    case 'room':
+                        this.room = { id: data.room_id };
                         break;
                     case 'typing':
-                        if (!this.assignedTo(data.from)) {
+                        if (!this.assignedTo(data.conversation_id)) {
                             return;
                         }
 
-                        if (this.currentClient.identifier !== data.from) {
-                            return;
-                        }
+                        this.clearTyper(data.from);
+                        this.setTyper(data.from);
+                        this.scroll();
 
-                        clearTimeout(this.typingTimeout);
-                        this.currentClient.typing = true;
-
-                        this.typingTimeout = setTimeout(function() {
-                            this.currentClient.typing = false;
-                        }.bind(this), 1000);
-
-                        this.$nextTick(() => {
-                            this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-                        });
                         break;
-                    case 'user:list':
-                        const newClients = data.users.map((a) => {
-                            return a.identifier;
+                    case 'conversation:list':
+                        const newConversations = data.conversations.map((conversation) => {
+                            return conversation.id;
                         });
 
                         // Active client has disconnected
-                        if (this.currentClient.identifier && !newClients.includes(this.currentClient.identifier)) {
-                            this.currentMessages.push({
-                                message: this.currentClient.name + ' har lukket chatten.',
+                        if (this.activeConversation.id && !newConversations.includes(this.activeConversation.id)) {
+                            this.activeConversation.messages.push({
+                                message: this.activeConversation.user.name + ' har lukket chatten.',
                                 sender: 'System',
                                 time: TimeService.now()
                             });
-                            this.currentClient = {};
-
-                            this.$nextTick(() => {
-                                this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-                            });
+                            this.activeConversation.closed = true;
                         }
 
-                        // Maybe check if some assigned client has disconnected.
-
-                        this.clients = data.users;
-
+                        this.conversations = data.conversations;
+                        this.scroll();
                         break;
                 }
             },
@@ -207,9 +214,10 @@
             },
 
             sendMessage() {
-                var message = this.message.trim();
+                const message = this.message.trim();
+                const c_id = this.activeConversation.id;
 
-                if (message === '' || !this.currentClient.identifier) {
+                if (message === '' || !c_id) {
                     return;
                 }
 
@@ -217,11 +225,11 @@
                     type: 'message',
                     data: {
                         message: message,
-                        to: this.currentClient.identifier
+                        conversation: c_id
                     }
                 });
 
-                var messages = this.assignedClients[this.currentClient.identifier].messages;
+                var messages = this.assignedConversations[c_id].messages;
                 var msg = {
                     from: this.identifier,
                     message: message,
@@ -229,13 +237,11 @@
                     time: TimeService.now()
                 };
                 messages.push(msg);
-                this.$set(this.assignedClients[this.currentClient.identifier], 'messages', messages);
+                this.$set(this.assignedConversations[c_id], 'messages', messages);
 
                 this.message = '';
 
-                this.$nextTick(() => {
-                    this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-                });
+                this.scroll();
             },
 
             typing: _.throttle(function(e) {
@@ -243,40 +249,42 @@
                     return;
                 }
 
-                if (!this.currentClient.identifier) {
+                if (!this.activeClients.length) {
                     return;
                 }
 
-                this.send({
-                    type: 'typing',
-                    data: {
-                        to: this.currentClient.identifier
-                    }
-                });
+                for (const client of this.activeClients) {
+                    this.send({
+                        type: 'typing',
+                        data: {
+                            to: client.identifier
+                        }
+                    });
+                }
             }, 350),
 
-            conversation(client) {
-                if (!this.assignedTo(client.identifier)) {
+            assign(conversation) {
+                if (!this.assignedTo(conversation.id)) {
                     this.send({
                         type: 'assign',
                         data: {
                             assignee: this.identifier,
-                            to: client.identifier
+                            conversation: conversation.id
                         }
                     });
 
-                    client.messages = [];
-                    client.unseen = false;
+                    conversation.messages = [];
+                    conversation.unseen = false;
+                    conversation.closed = false;
 
-                    this.assignedClients[client.identifier] = client;
+                    this.assignedConversations[conversation.id] = conversation;
                 }
 
-                this.assignedClients[client.identifier].unseen = false;
-                this.currentClient = this.assignedClients[client.identifier];
-                this.currentMessages = this.currentClient.messages;
+                this.assignedConversations[conversation.id].unseen = false;
+                this.activeConversation = this.assignedConversations[conversation.id];
             },
 
-            unassign(client) {
+            unassign(conversation) {
                 this.send({
                     type: 'unassign',
                     data: {
@@ -285,25 +293,60 @@
                     }
                 });
 
-                this.currentClient = {};
-                this.currentMessages = [];
-                delete this.assignedClients[client.identifier];
+                this.activeConversation = {};
+                delete this.assignedConversations[conversation.id];
             },
 
-            assignedTo(identifier) {
-                return typeof this.assignedClients[identifier] !== 'undefined';
+            assignedTo(id) {
+                return typeof this.assignedConversations[id] !== 'undefined';
             },
 
-            activeClient(identifier) {
-                return identifier === this.currentClient.identifier;
+            isActiveConversation(id) {
+                return this.activeConversation.id === id;
             },
 
-            unseenMessages(identifier) {
-                if (typeof this.assignedClients[identifier] === 'undefined') {
+            unseenMessages(id) {
+                if (typeof this.assignedConversations[id] === 'undefined') {
                     return false;
                 }
 
-                return this.assignedClients[identifier].unseen === true;
+                return this.assignedConversations[id].unseen === true;
+            },
+
+            getClientIndex(identifier) {
+                for (var i = 0; i < this.activeClients.length; i++) {
+                    if (identifier === this.activeClients[i].identifier) {
+                        return i;
+                    }
+                }
+
+                return undefined;
+            },
+
+            setTyper(identifier) {
+                this.typingTimeouts[identifier] = setTimeout(function() {
+                    this.clearTyper(identifier);
+                }.bind(this), 1000);
+
+                var index = this.getClientIndex(identifier);
+                this.activeClients[index].typing = true;
+            },
+
+            clearTyper(identifier) {
+                clearTimeout(this.typingTimeouts[identifier]);
+
+                var index = this.getClientIndex(identifier);
+                this.activeClients[index].typing = false;
+            },
+
+            scroll() {
+                this.$nextTick(() => {
+                    if (!this.$refs.messagesContainer) {
+                        return;
+                    }
+
+                    this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
+                });
             }
         },
     }

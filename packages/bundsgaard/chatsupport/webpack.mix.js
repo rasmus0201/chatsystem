@@ -30,7 +30,8 @@ mix.setPublicPath(publicPath)
                 '@': path.resolve(__dirname, 'resources/js/'),
             },
         }
-    });
+    })
+    .version();
 
 if (mix.inProduction()) {
     mix.options({
@@ -41,6 +42,5 @@ if (mix.inProduction()) {
                 },
             },
         },
-    })
-    .version();
+    });
 }

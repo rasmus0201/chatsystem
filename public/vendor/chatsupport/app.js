@@ -1,9 +1,9 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([["/app"],{
 
 /***/ "../../../node_modules/popper.js/dist/esm/popper.js":
-/*!****************************************************************************!*\
-  !*** /Users/rasmus/http/chatsys/node_modules/popper.js/dist/esm/popper.js ***!
-  \****************************************************************************/
+/*!********************************************************************************!*\
+  !*** /Users/rasmus/Sites/chatsystem/node_modules/popper.js/dist/esm/popper.js ***!
+  \********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4295,23 +4295,65 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
+      connection: null,
+      identifier: window.Chatsupport.session,
+      name: 'Supporter',
       message: '',
       room: null,
-      clients: [],
-      assignedClients: [],
-      currentClient: {},
-      currentMessages: [],
-      connection: null,
-      name: 'Supporter',
-      identifier: window.Chatsupport.session,
-      typingTimeout: null
+      conversations: [],
+      assignedConversations: [],
+      activeConversation: {},
+      activeClients: [],
+      typingTimeouts: []
     };
   },
   props: ['rooms'],
+  computed: {
+    typingClients: function typingClients() {
+      var typing = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.activeClients[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _client = _step.value;
+
+          if (_client.typing) {
+            typing.push(_client);
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+            _iterator["return"]();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return typing;
+    }
+  },
+  created: function created() {
+    this.openSocket();
+  },
   methods: {
+    format: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].format,
     setRoom: function setRoom(room) {
       this.room = room;
-      this.openSocket();
+      this.send({
+        type: 'session:room',
+        data: {
+          room_id: this.room.id
+        }
+      });
     },
     openSocket: function openSocket() {
       var protocol = location.protocol === 'http:' ? 'ws' : 'wss';
@@ -4342,7 +4384,6 @@ __webpack_require__.r(__webpack_exports__);
           language: navigator.language,
           name: this.name,
           identifier: this.identifier,
-          room_id: this.room.id,
           credentials: {
             username: 'test',
             password: 'test'
@@ -4351,71 +4392,63 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     onMessage: function onMessage(e) {
-      var _this = this;
-
       var _JSON$parse = JSON.parse(e.data),
           type = _JSON$parse.type,
           data = _JSON$parse.data;
 
       switch (type) {
         case 'message':
-          if (!this.assignedTo(data.from)) {
+          var c_id = data.conversation_id;
+
+          if (!this.assignedTo(c_id)) {
             return;
           }
 
-          if (!this.activeClient(data.from)) {
-            this.$set(this.assignedClients[data.from], 'unseen', true);
+          if (!this.isActiveConversation(c_id)) {
+            this.$set(this.assignedConversations[c_id], 'unseen', true);
             this.$forceUpdate();
           }
 
-          var messages = this.assignedClients[data.from].messages;
-          messages.push(data);
-          this.$set(this.assignedClients[data.from], 'messages', messages);
-          clearTimeout(this.typingTimeout);
-          this.currentClient.typing = false;
-          this.$nextTick(function () {
-            _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
-          });
+          var messages = this.assignedConversations[c_id].messages;
+          messages.push(data.message);
+          this.$set(this.assignedConversations[c_id], 'messages', messages);
+          this.messages.push(data);
+          this.clearTyper(data.message.user.session_id);
+          this.scroll();
+          break;
+
+        case 'room':
+          this.room = {
+            id: data.room_id
+          };
           break;
 
         case 'typing':
-          if (!this.assignedTo(data.from)) {
+          if (!this.assignedTo(data.conversation_id)) {
             return;
           }
 
-          if (this.currentClient.identifier !== data.from) {
-            return;
-          }
-
-          clearTimeout(this.typingTimeout);
-          this.currentClient.typing = true;
-          this.typingTimeout = setTimeout(function () {
-            this.currentClient.typing = false;
-          }.bind(this), 1000);
-          this.$nextTick(function () {
-            _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
-          });
+          this.clearTyper(data.from);
+          this.setTyper(data.from);
+          this.scroll();
           break;
 
-        case 'user:list':
-          var newClients = data.users.map(function (a) {
-            return a.identifier;
+        case 'conversation:list':
+          var newConversations = data.conversations.map(function (conversation) {
+            return conversation.id;
           }); // Active client has disconnected
 
-          if (this.currentClient.identifier && !newClients.includes(this.currentClient.identifier)) {
-            this.currentMessages.push({
-              message: this.currentClient.name + ' har lukket chatten.',
+          if (this.activeConversation.id && !newConversations.includes(this.activeConversation.id)) {
+            this.activeConversation.messages.push({
+              message: this.activeConversation.user.name + ' har lukket chatten.',
               sender: 'System',
               time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
             });
-            this.currentClient = {};
-            this.$nextTick(function () {
-              _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
-            });
-          } // Maybe check if some assigned client has disconnected.
+            this.activeConversation.closed = true;
+          }
 
-
-          this.clients = data.users;
+          this.conversations = data.conversations;
+          this.scroll();
           break;
       }
     },
@@ -4423,11 +4456,10 @@ __webpack_require__.r(__webpack_exports__);
       this.connection.send(JSON.stringify(data));
     },
     sendMessage: function sendMessage() {
-      var _this2 = this;
-
       var message = this.message.trim();
+      var c_id = this.activeConversation.id;
 
-      if (message === '' || !this.currentClient.identifier) {
+      if (message === '' || !c_id) {
         return;
       }
 
@@ -4435,10 +4467,10 @@ __webpack_require__.r(__webpack_exports__);
         type: 'message',
         data: {
           message: message,
-          to: this.currentClient.identifier
+          conversation: c_id
         }
       });
-      var messages = this.assignedClients[this.currentClient.identifier].messages;
+      var messages = this.assignedConversations[c_id].messages;
       var msg = {
         from: this.identifier,
         message: message,
@@ -4446,47 +4478,67 @@ __webpack_require__.r(__webpack_exports__);
         time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
       };
       messages.push(msg);
-      this.$set(this.assignedClients[this.currentClient.identifier], 'messages', messages);
+      this.$set(this.assignedConversations[c_id], 'messages', messages);
       this.message = '';
-      this.$nextTick(function () {
-        _this2.$refs.messagesContainer.scrollTop = _this2.$refs.messagesContainer.scrollHeight;
-      });
+      this.scroll();
     },
     typing: _.throttle(function (e) {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter') {
         return;
       }
 
-      if (!this.currentClient.identifier) {
+      if (!this.activeClients.length) {
         return;
       }
 
-      this.send({
-        type: 'typing',
-        data: {
-          to: this.currentClient.identifier
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = this.activeClients[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var _client2 = _step2.value;
+          this.send({
+            type: 'typing',
+            data: {
+              to: _client2.identifier
+            }
+          });
         }
-      });
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
+            _iterator2["return"]();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
     }, 350),
-    conversation: function conversation(client) {
-      if (!this.assignedTo(client.identifier)) {
+    assign: function assign(conversation) {
+      if (!this.assignedTo(conversation.id)) {
         this.send({
           type: 'assign',
           data: {
             assignee: this.identifier,
-            to: client.identifier
+            conversation: conversation.id
           }
         });
-        client.messages = [];
-        client.unseen = false;
-        this.assignedClients[client.identifier] = client;
+        conversation.messages = [];
+        conversation.unseen = false;
+        conversation.closed = false;
+        this.assignedConversations[conversation.id] = conversation;
       }
 
-      this.assignedClients[client.identifier].unseen = false;
-      this.currentClient = this.assignedClients[client.identifier];
-      this.currentMessages = this.currentClient.messages;
+      this.assignedConversations[conversation.id].unseen = false;
+      this.activeConversation = this.assignedConversations[conversation.id];
     },
-    unassign: function unassign(client) {
+    unassign: function unassign(conversation) {
       this.send({
         type: 'unassign',
         data: {
@@ -4494,22 +4546,53 @@ __webpack_require__.r(__webpack_exports__);
           to: client.identifier
         }
       });
-      this.currentClient = {};
-      this.currentMessages = [];
-      delete this.assignedClients[client.identifier];
+      this.activeConversation = {};
+      delete this.assignedConversations[conversation.id];
     },
-    assignedTo: function assignedTo(identifier) {
-      return typeof this.assignedClients[identifier] !== 'undefined';
+    assignedTo: function assignedTo(id) {
+      return typeof this.assignedConversations[id] !== 'undefined';
     },
-    activeClient: function activeClient(identifier) {
-      return identifier === this.currentClient.identifier;
+    isActiveConversation: function isActiveConversation(id) {
+      return this.activeConversation.id === id;
     },
-    unseenMessages: function unseenMessages(identifier) {
-      if (typeof this.assignedClients[identifier] === 'undefined') {
+    unseenMessages: function unseenMessages(id) {
+      if (typeof this.assignedConversations[id] === 'undefined') {
         return false;
       }
 
-      return this.assignedClients[identifier].unseen === true;
+      return this.assignedConversations[id].unseen === true;
+    },
+    getClientIndex: function getClientIndex(identifier) {
+      for (var i = 0; i < this.activeClients.length; i++) {
+        if (identifier === this.activeClients[i].identifier) {
+          return i;
+        }
+      }
+
+      return undefined;
+    },
+    setTyper: function setTyper(identifier) {
+      this.typingTimeouts[identifier] = setTimeout(function () {
+        this.clearTyper(identifier);
+      }.bind(this), 1000);
+      var index = this.getClientIndex(identifier);
+      this.activeClients[index].typing = true;
+    },
+    clearTyper: function clearTyper(identifier) {
+      clearTimeout(this.typingTimeouts[identifier]);
+      var index = this.getClientIndex(identifier);
+      this.activeClients[index].typing = false;
+    },
+    scroll: function scroll() {
+      var _this = this;
+
+      this.$nextTick(function () {
+        if (!_this.$refs.messagesContainer) {
+          return;
+        }
+
+        _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
+      });
     }
   }
 });
@@ -4616,6 +4699,7 @@ __webpack_require__.r(__webpack_exports__);
     this.openSocket();
   },
   methods: {
+    format: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].format,
     setRoom: function setRoom(room) {
       this.room = room;
       this.send({
@@ -4642,16 +4726,11 @@ __webpack_require__.r(__webpack_exports__);
       this.send({
         type: 'session:connect',
         data: {
-          // room_id: this.room.id,
           language: navigator.language,
           name: this.name,
           identifier: this.identifier
         }
-      }); // this.messages.push({
-      //     message: 'Venter på betjening fra ' + this.room.name,
-      //     sender: 'System',
-      //     time: TimeService.now()
-      // });
+      });
     },
     onMessage: function onMessage(e) {
       var _JSON$parse = JSON.parse(e.data),
@@ -4669,8 +4748,17 @@ __webpack_require__.r(__webpack_exports__);
           this.scroll();
           break;
 
-        case 'message':
-          console.log(data);
+        case 'room':
+          this.room = {
+            id: data.room_id
+          };
+          break;
+
+        case 'conversation':
+          this.messages = data.messages;
+          this.room = {
+            id: data.room_id
+          };
           break;
 
         case 'typing':
@@ -16011,14 +16099,16 @@ var render = function() {
                   staticStyle: { "min-height": "400px" }
                 },
                 [
-                  _vm._l(_vm.clients, function(client, index) {
+                  _vm._l(_vm.conversations, function(conversation, index) {
                     return _c(
                       "li",
                       {
                         key: index,
                         staticClass:
                           "list-group-item d-flex justify-content-between align-items-center",
-                        class: { active: _vm.activeClient(client.identifier) }
+                        class: {
+                          active: _vm.isActiveConversation(conversation.id)
+                        }
                       },
                       [
                         _c(
@@ -16027,12 +16117,12 @@ var render = function() {
                             staticClass: "d-flex align-items-center",
                             on: {
                               click: function($event) {
-                                return _vm.conversation(client)
+                                return _vm.assign(conversation)
                               }
                             }
                           },
                           [
-                            _vm.unseenMessages(client.identifier)
+                            _vm.unseenMessages(conversation.id)
                               ? _c("span", {
                                   staticClass: "indicator bg-primary mr-1"
                                 })
@@ -16041,7 +16131,7 @@ var render = function() {
                             _c("span", [
                               _vm._v(
                                 "\n                            " +
-                                  _vm._s(client.name) +
+                                  _vm._s(conversation.user.name) +
                                   "\n                        "
                               )
                             ])
@@ -16054,14 +16144,14 @@ var render = function() {
                             attrs: { type: "button" },
                             domProps: {
                               textContent: _vm._s(
-                                _vm.assignedTo(client.identifier)
+                                _vm.assignedTo(conversation.id)
                                   ? "Vælg"
                                   : "Forbind"
                               )
                             },
                             on: {
                               click: function($event) {
-                                return _vm.conversation(client)
+                                return _vm.assign(conversation)
                               }
                             }
                           }),
@@ -16073,7 +16163,7 @@ var render = function() {
                               attrs: { type: "button" },
                               on: {
                                 click: function($event) {
-                                  return _vm.ban(client)
+                                  return _vm.ban(_vm.client)
                                 }
                               }
                             },
@@ -16084,7 +16174,7 @@ var render = function() {
                     )
                   }),
                   _vm._v(" "),
-                  _vm.clients.length === 0
+                  _vm.conversations.length === 0
                     ? _c(
                         "li",
                         {
@@ -16112,7 +16202,7 @@ var render = function() {
                   staticStyle: { height: "400px" }
                 },
                 [
-                  _vm.currentClient.identifier
+                  _vm.activeConversation.id
                     ? _c(
                         "p",
                         {
@@ -16122,15 +16212,15 @@ var render = function() {
                         [
                           _vm._v(
                             "\n                    " +
-                              _vm._s(_vm.currentClient.name) +
+                              _vm._s(_vm.activeConversation.user.name) +
                               " - (" +
-                              _vm._s(_vm.currentClient.language) +
+                              _vm._s(_vm.activeConversation.user.language) +
                               ") "
                           ),
                           _c("small", [
                             _vm._v(
                               "(Session: " +
-                                _vm._s(_vm.currentClient.identifier) +
+                                _vm._s(_vm.activeConversation.user.session_id) +
                                 ")"
                             )
                           ]),
@@ -16141,7 +16231,7 @@ var render = function() {
                               staticClass: "btn btn-sm btn-warning",
                               on: {
                                 click: function($event) {
-                                  return _vm.unassign(_vm.currentClient)
+                                  return _vm.unassign(_vm.activeConversation)
                                 }
                               }
                             },
@@ -16155,50 +16245,62 @@ var render = function() {
                     "div",
                     { staticClass: "messages" },
                     [
-                      _vm._l(_vm.currentMessages, function(message, index) {
+                      _vm._l(_vm.activeConversation.messages, function(
+                        message,
+                        index
+                      ) {
                         return _c(
                           "p",
                           {
                             key: index,
                             staticClass: "p-2 mb-0 message",
-                            class: { client: message.sender !== _vm.name }
+                            class: {
+                              client:
+                                !message.from ||
+                                message.from.session_id !== _vm.identifier
+                            }
                           },
                           [
                             _vm._v(
                               "\n                        " +
-                                _vm._s(message.sender) +
+                                _vm._s(
+                                  message.system ? "System" : message.from.name
+                                ) +
                                 ": " +
                                 _vm._s(message.message)
                             ),
                             _c("br"),
                             _vm._v(" "),
-                            _c("small", [_vm._v(_vm._s(message.time))])
+                            _c("small", [
+                              _vm._v(_vm._s(_vm.format(message.created_at)))
+                            ])
                           ]
                         )
                       }),
                       _vm._v(" "),
-                      _vm.currentClient.typing
-                        ? _c(
-                            "p",
-                            {
-                              staticClass:
-                                "p-2 mb-0 d-flex align-items-center message client"
-                            },
-                            [
-                              _c("span", { staticClass: "mr-2" }, [
-                                _vm._v(_vm._s(_vm.currentClient.name) + ":")
-                              ]),
+                      _vm._l(_vm.typingClients, function(client, index) {
+                        return _c(
+                          "p",
+                          {
+                            key: index + "-typing",
+                            staticClass:
+                              "p-2 mb-0 d-flex align-items-center message client"
+                          },
+                          [
+                            _c("span", { staticClass: "mr-2" }, [
+                              _vm._v(_vm._s(client.name) + ":")
+                            ]),
+                            _vm._v(" "),
+                            _c("span", { staticClass: "lds-ellipsis" }, [
+                              _c("span"),
                               _vm._v(" "),
-                              _c("span", { staticClass: "lds-ellipsis" }, [
-                                _c("span"),
-                                _vm._v(" "),
-                                _c("span"),
-                                _vm._v(" "),
-                                _c("span")
-                              ])
-                            ]
-                          )
-                        : _vm._e()
+                              _c("span"),
+                              _vm._v(" "),
+                              _c("span")
+                            ])
+                          ]
+                        )
+                      })
                     ],
                     2
                   )
@@ -16257,7 +16359,7 @@ var render = function() {
                       staticClass: "btn btn-block btn-primary",
                       attrs: {
                         type: "button",
-                        disabled: !_vm.currentClient.identifier
+                        disabled: !_vm.activeConversation.id
                       },
                       on: { click: _vm.sendMessage }
                     },
@@ -16325,18 +16427,26 @@ var render = function() {
                           {
                             key: index + "-message",
                             staticClass: "p-2 mb-0 message",
-                            class: { client: message.sender !== _vm.name }
+                            class: {
+                              client:
+                                !message.from ||
+                                message.from.session_id !== _vm.identifier
+                            }
                           },
                           [
                             _vm._v(
                               "\n                        " +
-                                _vm._s(message.sender) +
+                                _vm._s(
+                                  message.system ? "System" : message.from.name
+                                ) +
                                 ": " +
                                 _vm._s(message.message)
                             ),
                             _c("br"),
                             _vm._v(" "),
-                            _c("small", [_vm._v(_vm._s(message.time))])
+                            _c("small", [
+                              _vm._v(_vm._s(_vm.format(message.created_at)))
+                            ])
                           ]
                         )
                       }),
@@ -16997,6 +17107,28 @@ function () {
 
       return time.substring(0, time.length - 1);
     }
+  }, {
+    key: "dateDiffInDays",
+    value: function dateDiffInDays(a, b) {
+      var MS_PER_Day = 1000 * 60 * 60 * 24; // Discard the time and time-zone information.
+
+      var utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate(), a.getHours(), a.getMinutes(), a.getSeconds());
+      var utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate(), b.getHours(), b.getMinutes(), b.getSeconds());
+      return ((utc2 - utc1) / MS_PER_Day).toFixed(2);
+    }
+  }, {
+    key: "format",
+    value: function format(d) {
+      var date = new Date(d);
+      var diff = TimeService.dateDiffInDays(date, new Date()); // If more than a day show the whole date except for the year.
+
+      if (diff >= 1) {
+        return date.getDate() + '/' + date.getMonth() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+      } // Get the time part
+
+
+      return d.split(' ')[1];
+    }
   }]);
 
   return TimeService;
@@ -17069,8 +17201,8 @@ function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

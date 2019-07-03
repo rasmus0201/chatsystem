@@ -31,6 +31,11 @@ class Room extends Model
 
     public function conversations()
     {
+        return $this->hasMany(Conversation::class);
+    }
+
+    public function activeConversations()
+    {
         return $this->hasMany(Conversation::class)->whereNull('closed_at');
     }
 

@@ -7,14 +7,31 @@ abstract class Responder
     protected $connections = [];
     protected $receivers = [];
 
+    protected $from;
+    protected $room;
+
     /**
      * Respond to the user
      */
     abstract protected function respond();
 
+    public function withRoom($room)
+    {
+        $this->room = $room;
+
+        return $this;
+    }
+
     public function withConnections($connections)
     {
         $this->connections = $connections;
+
+        return $this;
+    }
+
+    public function withFrom($connection)
+    {
+        $this->from = $connection;
 
         return $this;
     }

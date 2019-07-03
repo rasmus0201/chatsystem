@@ -16,10 +16,14 @@ class Message extends Model
     protected $hidden = [
         'id',
         'conversation_id',
-        'created_at',
-        'updated_at',
         'user_id',
+        'updated_at',
     ];
+
+    public function from()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function receivers()
     {

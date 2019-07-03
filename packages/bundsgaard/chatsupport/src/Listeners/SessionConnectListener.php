@@ -6,20 +6,20 @@ use Bundsgaard\ChatSupport\Storage\Room;
 use Bundsgaard\ChatSupport\Storage\User;
 use Bundsgaard\ChatSupport\Storage\UserStatus;
 use Bundsgaard\ChatSupport\Events\MessageEvent;
-use Bundsgaard\ChatSupport\Responders\MessageResponder;
-use Bundsgaard\ChatSupport\Responders\UserListResponder;
+use Bundsgaard\ChatSupport\Responders\ConversationListResponder;
+use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
 class SessionConnectListener
 {
     public $eventType = 'session:connect';
 
-    private $userListResponder;
-    private $messageResponder;
+    private $conversationListResponder;
+    private $conversationResponder;
 
-    public function __construct(UserListResponder $userListResponder, MessageResponder $messageResponder)
+    public function __construct(ConversationListResponder $conversationListResponder, ConversationResponder $conversationResponder)
     {
-        $this->userListResponder = $userListResponder;
-        $this->messageResponder = $messageResponder;
+        $this->conversationListResponder = $conversationListResponder;
+        $this->conversationResponder = $conversationResponder;
     }
 
     /**
@@ -44,7 +44,6 @@ class SessionConnectListener
 
         $session['user_id'] = null;
         $session['room_id'] = null;
-        // $session['room_id'] = isset($event->data->room_id) ? $event->data->room_id : null;
 
         if (isset($event->data->credentials)) {
             if (!$this->checkAuth($event)) {
@@ -75,48 +74,45 @@ class SessionConnectListener
             $user->room_id = $conversation->room_id;
         }
 
+        // If the connected user already is associated with a room,
+        // then we can set it now.
         if ($user->room_id) {
             $session['room_id'] = $user->room_id;
         }
 
-        // if (!$room = Room::find($session['room_id'])) {
-        //     $event->connection->close();
-        //     return false; // Stop next listeners
-        // }
-
         // Now the user is actually verified and therefor active.
         $user->status_id = UserStatus::ACTIVE;
-        // $user->room_id = $session['room_id'];
         $user->save();
-
-        // if (!$user->agent && !$user->activeConversations->first()) {
-        //     $conversation = $user->conversations()->create([
-        //         'room_id' => $session['room_id'],
-        //     ]);
-        //
-        //     $conversation->participants()->create([
-        //         'user_id' => $user->id
-        //     ]);
-        //
-        //     $conversation->message('System: Venter på betjening fra ' . $room->name, true);
-        // }
 
         $event->connection->session = $session;
         $event->connection->user = $user;
 
-        // Multicast the user list for this room to agents in this room.
-        // $this->userListResponder
-        //     ->withConnections($event->connections->users($user->room_id))
-        //     ->withReceivers($event->connections->agents($user->room_id))
-        //     ->respond();
-
-        // An agent can't receive initial messages
-        // TODO check if conversation is set
-        if (!$user->agent) {
-            $this->messageResponder
+        // If there is an ongoing conversation
+        if (!$user->agent && isset($conversation)) {
+            $this->conversationResponder
                 ->withReceiver($event->connection)
                 ->withConversation($conversation)
                 ->respond();
+        }
+
+        // Multicast the user list for this room to agents in this room.
+        if ($user->room_id) {
+            $receivers = $event->connections->agents($user->room_id);
+
+            if ($user->agent) {
+                $receivers[] = $event->connection;
+            }
+
+            $this->conversationListResponder
+                ->withRoom($user->room_id)
+                ->withReceivers($receivers)
+                ->respond();
+
+            $event->connection->send(json_encode([
+                'type' => 'room',
+                'message' => 'Set the selected room',
+                'data' => ['room_id' => $user->room_id]
+            ]));
         }
     }
 

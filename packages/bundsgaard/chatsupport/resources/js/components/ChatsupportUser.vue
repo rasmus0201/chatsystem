@@ -5,9 +5,9 @@
             <div class="col-12">
                 <div class="overflow-auto border border-primary rounded-sm" style="height: 400px;" ref="messagesContainer">
                     <div class="messages">
-                        <p class="p-2 mb-0 message" :class="{ 'client': message.sender !== name }" v-for="(message, index) in messages" :key="index + '-message'">
-                            {{ message.sender }}: {{ message.message }}<br>
-                            <small>{{ message.time }}</small>
+                        <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== identifier) }" v-for="(message, index) in messages" :key="index + '-message'">
+                            {{ message.system ? 'System' : message.from.name }}: {{ message.message }}<br>
+                            <small>{{ format(message.created_at) }}</small>
                         </p>
 
                         <p class="p-2 mb-0 d-flex align-items-center message client" v-for="(client, index) in typingClients" :key="index + '-typing'">
@@ -77,6 +77,8 @@
         },
 
         methods: {
+            format: TimeService.format,
+
             setRoom(room) {
                 this.room = room;
 
@@ -102,18 +104,11 @@
                 this.send({
                     type: 'session:connect',
                     data: {
-                        // room_id: this.room.id,
                         language: navigator.language,
                         name: this.name,
                         identifier: this.identifier
                     }
                 });
-
-                // this.messages.push({
-                //     message: 'Venter på betjening fra ' + this.room.name,
-                //     sender: 'System',
-                //     time: TimeService.now()
-                // });
             },
 
             onMessage(e) {
@@ -130,8 +125,12 @@
                         this.scroll();
 
                         break;
-                    case 'message':
-                        console.log(data);
+                    case 'room':
+                        this.room = { id: data.room_id };
+                        break;
+                    case 'conversation':
+                        this.messages = data.messages;
+                        this.room = { id: data.room_id };
 
                         break;
                     case 'typing':
