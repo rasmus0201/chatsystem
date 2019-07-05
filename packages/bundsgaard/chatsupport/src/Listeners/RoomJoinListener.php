@@ -9,11 +9,7 @@ use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
 class RoomJoinListener
 {
-<<<<<<< HEAD:packages/bundsgaard/chatsupport/src/Listeners/SessionRoomListener.php
-    public $listen = 'session:room';
-=======
-    public $eventType = 'room:join';
->>>>>>> f5c50b7efe0d55f9546e29e608951b9b17a8cb81:packages/bundsgaard/chatsupport/src/Listeners/RoomJoinListener.php
+    public $listen = 'room:join';
 
     private $conversationListResponder;
     private $conversationResponder;
