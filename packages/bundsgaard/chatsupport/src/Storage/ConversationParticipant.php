@@ -22,4 +22,9 @@ class ConversationParticipant extends Model
 
         return $this;
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

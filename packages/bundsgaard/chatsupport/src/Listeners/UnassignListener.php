@@ -21,6 +21,8 @@ class UnassignListener
         // Get the connections to send to
         $connections = $event->connections->get($event->data->to);
 
+        // TODO Create message saybing the agent has left.
+
         // TODO Store this in DB
         foreach ($connections as $to) {
             $to->send(json_encode([

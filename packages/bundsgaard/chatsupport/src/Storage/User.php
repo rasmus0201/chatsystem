@@ -51,10 +51,6 @@ class User extends Model
             'user_id' => $this->id
         ]);
 
-        // TODO Remove this because it's actually just a status of the "queue"
-        // this should be a sticky message until the user is assigned.
-        $conversation->message('Venter på betjening fra ' . $room->name, true);
-
         return $conversation;
     }
 }

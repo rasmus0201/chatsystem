@@ -46,7 +46,7 @@
 
                 switch (type) {
                     case 'message':
-                        if (!this.assignedTo(data.from)) {
+                        if (!this.conversation.clients.length) {
                             return;
                         }
 
@@ -65,7 +65,7 @@
 
                         break;
                     case 'typing':
-                        if (!this.assignedTo(data.from)) {
+                        if (!this.conversation.clients.length) {
                             return;
                         }
 
@@ -75,35 +75,37 @@
 
                         break;
                     case 'assign':
-                        if (this.assignedTo(data.assignee.session_id)) {
-                            return;
-                        }
-
                         this.conversation.clients.push(data.assignee);
                         this.conversation.messages.push(data.message);
                         this.scroll();
 
                         break;
                     case 'unassign':
-                        if (!this.assignedTo(data.assignee.session_id)) {
+                        if (!this.conversation.clients.length) {
                             return;
                         }
 
                         this.unassign(data.assignee.session_id);
-                        this.conversation.messages.push({
-                            message: data.assignee.name + ' har forladt chatten.',
-                            sender: 'System',
-                            time: data.time
-                        });
                         this.scroll();
 
                         break;
                 }
             },
 
-            getClientIndex(session_id) {
+            leave(event) {
+                this.send(event);
+                this.reset();
+
+                // Force update views
+                this.$refs['chat'].$forceUpdate();
+                this.$forceUpdate();
+            },
+
+            getClientIndex(sessionId) {
                 for (var i = 0; i < this.conversation.clients.length; i++) {
-                    if (session_id === this.conversation.clients[i].session_id) {
+                    const client = this.conversation.clients[i];
+
+                    if (client.session_id === sessionId) {
                         return i;
                     }
                 }
@@ -111,17 +113,14 @@
                 return undefined;
             },
 
-            assignedTo(session_id) {
-                return (session_id === 'SYSTEM') || (typeof this.getClientIndex(session_id) !== 'undefined');
-            },
+            unassign(sessionId) {
+                var index = this.getClientIndex(sessionId);
 
-            leave(event) {
-                this.send(event);
-                this.reset();
+                this.$delete(this.conversation.clients, index);
             },
 
             reset() {
-                this.conversation = {};
+                this.conversation = Object.assign({}, {}, {}); // Reset the object this way Vue is reactive to the change.
                 this.$set(this.conversation, 'messages', []);
                 this.$set(this.conversation, 'clients', []);
                 this.$set(this.conversation, 'typingClients', []);

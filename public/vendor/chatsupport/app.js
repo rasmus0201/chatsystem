@@ -4257,9 +4257,12 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
- // TODO
-// Ideally there would be no 'clients' property since we always send out,
-// to the conversation_id. But maybe just an assigned: true/false
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   props: ['user', 'conversation'],
@@ -4283,6 +4286,10 @@ __webpack_require__.r(__webpack_exports__);
         return;
       }
 
+      if (!this.conversation.clients.length) {
+        return;
+      }
+
       this.$emit('message:type', {
         type: 'message:type',
         data: {
@@ -4292,6 +4299,11 @@ __webpack_require__.r(__webpack_exports__);
       this.scroll();
     }, 350),
     send: function send() {
+      // TODO This should be allowed when we the agent can just get all messages.
+      if (!this.conversation.clients.length) {
+        return;
+      }
+
       var message = this.message.trim();
 
       if (message === '') {
@@ -4758,7 +4770,7 @@ __webpack_require__.r(__webpack_exports__);
 
       switch (type) {
         case 'message':
-          if (!this.assignedTo(data.from)) {
+          if (!this.conversation.clients.length) {
             return;
           }
 
@@ -4782,7 +4794,7 @@ __webpack_require__.r(__webpack_exports__);
           break;
 
         case 'typing':
-          if (!this.assignedTo(data.from)) {
+          if (!this.conversation.clients.length) {
             return;
           }
 
@@ -4792,48 +4804,46 @@ __webpack_require__.r(__webpack_exports__);
           break;
 
         case 'assign':
-          if (this.assignedTo(data.assignee.session_id)) {
-            return;
-          }
-
           this.conversation.clients.push(data.assignee);
           this.conversation.messages.push(data.message);
           this.scroll();
           break;
 
         case 'unassign':
-          if (!this.assignedTo(data.assignee.session_id)) {
+          if (!this.conversation.clients.length) {
             return;
           }
 
           this.unassign(data.assignee.session_id);
-          this.conversation.messages.push({
-            message: data.assignee.name + ' har forladt chatten.',
-            sender: 'System',
-            time: data.time
-          });
           this.scroll();
           break;
       }
     },
-    getClientIndex: function getClientIndex(session_id) {
+    leave: function leave(event) {
+      this.send(event);
+      this.reset(); // Force update views
+
+      this.$refs['chat'].$forceUpdate();
+      this.$forceUpdate();
+    },
+    getClientIndex: function getClientIndex(sessionId) {
       for (var i = 0; i < this.conversation.clients.length; i++) {
-        if (session_id === this.conversation.clients[i].session_id) {
+        var client = this.conversation.clients[i];
+
+        if (client.session_id === sessionId) {
           return i;
         }
       }
 
       return undefined;
     },
-    assignedTo: function assignedTo(session_id) {
-      return session_id === 'SYSTEM' || typeof this.getClientIndex(session_id) !== 'undefined';
-    },
-    leave: function leave(event) {
-      this.send(event);
-      this.reset();
+    unassign: function unassign(sessionId) {
+      var index = this.getClientIndex(sessionId);
+      this.$delete(this.conversation.clients, index);
     },
     reset: function reset() {
-      this.conversation = {};
+      this.conversation = Object.assign({}, {}, {}); // Reset the object this way Vue is reactive to the change.
+
       this.$set(this.conversation, 'messages', []);
       this.$set(this.conversation, 'clients', []);
       this.$set(this.conversation, 'typingClients', []);
@@ -16057,14 +16067,16 @@ var render = function() {
             "div",
             {
               ref: "messagesContainer",
-              staticClass: "overflow-auto border border-primary rounded-sm",
+              staticClass:
+                "overflow-auto border border-primary rounded-sm position-relative messages-container",
               staticStyle: { height: "400px" }
             },
             [
               _c(
                 "p",
                 {
-                  staticClass: "p-2 mb-0 bg-light border-bottom position-sticky"
+                  staticClass:
+                    "p-2 mb-0 bg-light border-bottom position-sticky chat-window-top-status"
                 },
                 [
                   _vm.user.agent === true
@@ -16119,8 +16131,19 @@ var render = function() {
                   })
                 ],
                 2
-              )
-            ]
+              ),
+              _vm._v(" "),
+              !_vm.conversation.clients.length
+                ? _c("message", {
+                    staticClass:
+                      "bg-light border-top position-absolute chat-window-bottom-status",
+                    attrs: {
+                      message: { system: 1, message: "Venter på betjening" }
+                    }
+                  })
+                : _vm._e()
+            ],
+            1
           ),
           _vm._v(" "),
           _c("div", { staticClass: "row mt-4" }, [
@@ -16577,11 +16600,7 @@ var render = function() {
     "p",
     {
       staticClass: "p-2 mb-0 message",
-      class: {
-        client:
-          !_vm.message.from ||
-          _vm.message.from.session_id !== _vm.user.session_id
-      }
+      class: { client: !_vm.message.from || !_vm.message.from.session_id }
     },
     [
       _vm._v(
@@ -16592,7 +16611,9 @@ var render = function() {
       ),
       _c("br"),
       _vm._v(" "),
-      _c("small", [_vm._v(_vm._s(_vm.format(_vm.message.created_at)))])
+      _vm.message.created_at
+        ? _c("small", [_vm._v(_vm._s(_vm.format(_vm.message.created_at)))])
+        : _vm._e()
     ]
   )
 }
@@ -17435,7 +17456,7 @@ var commonChat = {
         message: event.data.message,
         system: 0
       });
-      this.$refs.chat.scroll();
+      this.scroll();
     },
     setTyper: function setTyper(session_id) {
       this.typingTimeouts[session_id] = setTimeout(function () {

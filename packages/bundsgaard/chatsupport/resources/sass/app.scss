@@ -1,7 +1,18 @@
 @import "~bootstrap/scss/bootstrap";
 
-.messages .client {
+.messages-container .client {
     background-color: #dee2e6;
+}
+
+.chat-window-top-status {
+    top: 0;
+}
+
+.chat-window-bottom-status {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
 }
 
 .indicator {

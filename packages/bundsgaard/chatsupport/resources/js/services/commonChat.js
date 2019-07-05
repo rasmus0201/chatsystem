@@ -50,7 +50,7 @@ const commonChat = {
                 system: 0,
             });
 
-            this.$refs.chat.scroll();
+            this.scroll();
         },
 
         setTyper(session_id) {

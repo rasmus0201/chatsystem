@@ -1,7 +1,7 @@
 <template>
-    <p class="p-2 mb-0 message" :class="{ 'client': !message.from || (message.from.session_id !== user.session_id) }">
+    <p class="p-2 mb-0 message" :class="{ 'client': !message.from || !message.from.session_id }">
         {{ message.system ? 'System' : message.from.name }}: {{ message.message }}<br>
-        <small>{{ format(message.created_at) }}</small>
+        <small v-if="message.created_at">{{ format(message.created_at) }}</small>
     </p>
 </template>
 

@@ -49,7 +49,7 @@ class AssignListener
         // Create new message - "You got assigned"
         $message = $conversation->messages()->create([
             'system' => 1,
-            'message' => 'Du bliver nu betjent af ' . $agent->name
+            'message' => $agent->name . ' deltager nu.'
         ]);
 
         // Set the receiver to the user who initiated the conversation

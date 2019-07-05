@@ -21,6 +21,16 @@ class ConversationResponder extends Responder
         $result = $conversation->toArray();
         $result['messages'] = $messages->get();
 
+
+        $participants = $conversation->activeParticipants()->with(['user'])->where('user_id', '!=', $conversation->user_id)->get();
+        $result['clients'] = $participants->pluck('user')->map(function ($item) {
+            return $item->only([
+                'session_id',
+                'name',
+                'language'
+            ]);
+        });
+
         $receiver->send(json_encode([
             'type' => $this->type,
             'message' => 'Previous messages for conversation',
