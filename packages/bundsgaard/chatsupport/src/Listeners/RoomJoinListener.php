@@ -7,9 +7,13 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 use Bundsgaard\ChatSupport\Responders\ConversationListResponder;
 use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
-class SessionRoomListener
+class RoomJoinListener
 {
+<<<<<<< HEAD:packages/bundsgaard/chatsupport/src/Listeners/SessionRoomListener.php
     public $listen = 'session:room';
+=======
+    public $eventType = 'room:join';
+>>>>>>> f5c50b7efe0d55f9546e29e608951b9b17a8cb81:packages/bundsgaard/chatsupport/src/Listeners/RoomJoinListener.php
 
     private $conversationListResponder;
     private $conversationResponder;

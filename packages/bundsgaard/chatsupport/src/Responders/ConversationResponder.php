@@ -21,12 +21,15 @@ class ConversationResponder extends Responder
         $conversation = $this->conversation;
         $messages = $conversation->messages()->with(['from']);
 
+        $result = $conversation->toArray();
+        $result['messages'] = $messages->get();
+
         $receiver->send(json_encode([
             'type' => $this->listen,
             'message' => 'Previous messages for conversation',
             'data' => [
                 'room_id' => $conversation->room_id,
-                'messages' => $messages->get()
+                'conversation' => $result,
             ]
         ]));
     }

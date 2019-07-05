@@ -30,7 +30,7 @@ class SessionConnectListener
      */
     public function handle(MessageEvent $event)
     {
-        if (!isset($event->data->identifier, $event->data->name, $event->data->language)) {
+        if (!isset($event->data->session_id, $event->data->name, $event->data->language)) {
             $event->connection->close();
             return false; // Stop next listeners
         }
@@ -40,7 +40,7 @@ class SessionConnectListener
         $session['agent'] = false;
         $session['name'] = $event->data->name;
         $session['language'] = $event->data->language;
-        $session['identifier'] = $event->data->identifier;
+        $session['session_id'] = $event->data->session_id;
 
         $session['user_id'] = null;
         $session['room_id'] = null;
@@ -55,12 +55,12 @@ class SessionConnectListener
             $session['agent'] = true;
         }
 
-        if (!$user = $this->findUser($session['identifier'], $session['agent'])) {
+        if (!$user = $this->findUser($session['session_id'], $session['agent'])) {
             $user = User::create([
                 'user_id' => null,
                 'status_id' => UserStatus::DISCONNECTED,
                 'room_id' => $session['room_id'],
-                'session_id' => $session['identifier'],
+                'session_id' => $session['session_id'],
                 'agent' => $session['agent'],
                 'name' => $session['name'],
                 'language' => $session['language'],

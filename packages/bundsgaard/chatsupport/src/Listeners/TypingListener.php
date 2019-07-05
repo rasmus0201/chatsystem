@@ -24,7 +24,7 @@ class TypingListener
                 'type' => $this->listen,
                 'message' => 'Is typing',
                 'data' => [
-                    'from' => $event->connection->session['identifier'],
+                    'from' => $event->connection->session['session_id'],
                     'sender' => $event->connection->session['name'],
                     'typing' => true,
                 ]

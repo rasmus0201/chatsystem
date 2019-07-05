@@ -33,27 +33,29 @@ class AssignListener
         $agent = $event->connection->user;
         $message = null;
 
-        if (!$participant = $conversation->participants()->where('user_id', $agent->id)->first()) {
-            $participant = $conversation->participants()->create([
-                'user_id' => $agent->id
-            ]);
+        // Update the connected_at/disconnected_at
+        if ($participant = $conversation->participants()->where('user_id', $agent->id)->first()) {
+            $participant->connected_at = new \DateTime();
+            $participant->disconnected_at = null;
+            $participant->save();
 
-            // Create new message - "You got assigned"
-            $message = $conversation->messages()->create([
-                'system' => 1,
-                'message' => 'Du bliver nu betjent af ' . $agent->name
-            ]);
-
-            // Set the receiver to the user who initiated the conversation
-            $message->receivers()->create([
-                'user_id' => $conversation->user_id
-            ]);
+            return;
         }
 
-        // Update the connected_at/disconnected_at
-        $participant->connected_at = new \DateTime();
-        $participant->disconnected_at = null;
-        $participant->save();
+        $participant = $conversation->participants()->create([
+            'user_id' => $agent->id
+        ]);
+
+        // Create new message - "You got assigned"
+        $message = $conversation->messages()->create([
+            'system' => 1,
+            'message' => 'Du bliver nu betjent af ' . $agent->name
+        ]);
+
+        // Set the receiver to the user who initiated the conversation
+        $message->receivers()->create([
+            'user_id' => $conversation->user_id
+        ]);
 
         // Get the connections to send to
         $connections = $event->connections->getByUserId($conversation->user_id);
