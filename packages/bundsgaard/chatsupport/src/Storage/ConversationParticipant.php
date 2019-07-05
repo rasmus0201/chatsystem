@@ -14,4 +14,12 @@ class ConversationParticipant extends Model
     protected $guarded = ['id'];
 
     public $timestamps = false;
+
+    public function disconnect()
+    {
+        $this->disconnected_at = new \DateTime();
+        $this->save();
+
+        return $this;
+    }
 }

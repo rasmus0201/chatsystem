@@ -59,8 +59,9 @@
                         this.room = { id: data.room_id };
                         break;
                     case 'conversation':
-                        this.conversation = Object.assign(this.conversation, data.conversation);
+                        this.conversation = Object.assign({}, this.conversation, data.conversation);
                         this.user.room = { id: data.room_id };
+                        this.scroll();
 
                         break;
                     case 'typing':
@@ -78,8 +79,8 @@
                             return;
                         }
 
-                        this.clients.push(data.assignee);
-                        this.messages.push(data.message);
+                        this.conversation.clients.push(data.assignee);
+                        this.conversation.messages.push(data.message);
                         this.scroll();
 
                         break;
@@ -89,7 +90,7 @@
                         }
 
                         this.unassign(data.assignee.session_id);
-                        this.messages.push({
+                        this.conversation.messages.push({
                             message: data.assignee.name + ' har forladt chatten.',
                             sender: 'System',
                             time: data.time
@@ -101,8 +102,8 @@
             },
 
             getClientIndex(session_id) {
-                for (var i = 0; i < this.clients.length; i++) {
-                    if (session_id === this.clients[i].session_id) {
+                for (var i = 0; i < this.conversation.clients.length; i++) {
+                    if (session_id === this.conversation.clients[i].session_id) {
                         return i;
                     }
                 }
@@ -115,7 +116,6 @@
             },
 
             leave(event) {
-                // TODO Make this (closes the conversation)
                 this.send(event);
                 this.reset();
             },

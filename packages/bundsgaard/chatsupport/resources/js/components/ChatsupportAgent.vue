@@ -108,7 +108,7 @@
                 this.room = room;
 
                 this.send({
-                    type: 'session:room',
+                    type: 'room:join',
                     data: {
                         room_id: this.room.id,
                     }

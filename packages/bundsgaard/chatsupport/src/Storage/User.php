@@ -40,4 +40,21 @@ class User extends Model
     {
         return $this->belongsTo(UserStatus::class);
     }
+
+    public function createConversation($room)
+    {
+        $conversation = $this->conversations()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $conversation->participants()->create([
+            'user_id' => $this->id
+        ]);
+
+        // TODO Remove this because it's actually just a status of the "queue"
+        // this should be a sticky message until the user is assigned.
+        $conversation->message('Venter på betjening fra ' . $room->name, true);
+
+        return $conversation;
+    }
 }

@@ -29,37 +29,29 @@ class RoomJoinListener
     public function handle(MessageEvent $event)
     {
         if (!isset($event->data->room_id)) {
-            $event->connection->close();
-            return false; // Stop next listeners
+            return;
         }
 
         $session = $event->connection->session;
         $user = $event->connection->user;
 
         if (!$room = Room::find($event->data->room_id)) {
-            $event->connection->close();
-            return false; // Stop next listeners
+            return;
         }
 
         // Check that this user is not an agent
         // Then get any active conversations or create a new one.
-        if (!$user->agent && !$conversation = $user->activeConversations->first()) {
-            $conversation = $user->conversations()->create([
-                'room_id' => $event->data->room_id,
-            ]);
+        if (!$user->agent) {
+            if (!$conversation = $user->activeConversations->first()) {
+                $conversation = $user->createConversation($room);
+            }
 
-            $conversation->participants()->create([
-                'user_id' => $user->id
-            ]);
-
-            $conversation->message('Venter på betjening fra ' . $room->name, true);
             $session['room_id'] = $conversation->room_id;
 
             // Send the conversation to the user.
             $this->conversationResponder
                 ->withReceiver($event->connection)
-                ->withConversation($conversation)
-                ->respond();
+                ->respondWith($conversation);
         } else {
             $session['room_id'] = $event->data->room_id;
         }

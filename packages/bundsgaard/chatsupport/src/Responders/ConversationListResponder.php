@@ -6,16 +6,13 @@ use Bundsgaard\ChatSupport\Storage\Room;
 
 class ConversationListResponder extends Responder
 {
-    public $listen = 'conversation:list';
+    public $type = 'conversation:list';
 
     /**
      * Respond to the user with data
      */
     public function respond()
     {
-        // TODO
-        // Refactor this to be called conversation list
-        // and get conversations from db then link the conversation users to active connections
         if (is_null($this->room)) {
             return;
         }
@@ -24,12 +21,13 @@ class ConversationListResponder extends Responder
             $this->room = Room::find($this->room);
         }
 
+        $conversations = $this->room->activeConversations()->with(['user'])->get();
         foreach ($this->receivers as $to) {
             $to->send(json_encode([
-                'type' => $this->listen,
+                'type' => $this->type,
                 'message' => 'List of connections in room',
                 'data' => [
-                    'conversations' => $this->room->activeConversations()->with(['user'])->get()
+                    'conversations' => $conversations
                 ]
             ]));
         }

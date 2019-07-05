@@ -10,11 +10,6 @@ abstract class Responder
     protected $from;
     protected $room;
 
-    /**
-     * Respond to the user
-     */
-    abstract protected function respond();
-
     public function withRoom($room)
     {
         $this->room = $room;
@@ -48,5 +43,21 @@ abstract class Responder
         $this->receivers = array_merge($this->receivers, $connections);
 
         return $this;
+    }
+
+    /**
+     * Respond
+     */
+    protected function respond()
+    {
+        throw new \Exception('Error method \'respond()\' was not defined on responder.', 1);
+    }
+
+    /**
+     * Respond with data
+     */
+    protected function respondWith($with)
+    {
+        throw new \Exception('Error method \'respond()\' was not defined on responder.', 1);
     }
 }

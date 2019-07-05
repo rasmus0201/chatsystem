@@ -1,3 +1,4 @@
+import TimeService from '../services/timeService';
 import WebSocketService from '../services/websocketService';
 
 // define a mixin object
@@ -68,11 +69,12 @@ const commonChat = {
             this.clients[index].typing = false;
         },
 
-        // TODO Maybe not needed
         scroll() {
-            this.$nextTick(() => {
-                this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-            });
+            if (!this.$refs['chat']) {
+                return;
+            }
+
+            this.$refs['chat'].scroll();
         }
     }
 }

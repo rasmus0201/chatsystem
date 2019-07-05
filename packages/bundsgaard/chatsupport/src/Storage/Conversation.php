@@ -22,7 +22,7 @@ class Conversation extends Model
     ];
 
     private $newMessage = [
-        'excludes' => [],
+        'exclude' => [],
     ];
 
     public function user()
@@ -45,6 +45,25 @@ class Conversation extends Model
         return $this->hasMany(ConversationParticipant::class)->whereNull('disconnected_at');
     }
 
+    public function disconnect($user)
+    {
+        if (!is_integer($user)) {
+            $user = $user->id;
+        }
+
+        $this->participants()->where('user_id', $user)->first()->disconnect();
+
+        return $this;
+    }
+
+    public function close()
+    {
+        $this->closed_at = new \DateTime();
+        $this->save();
+
+        return $this;
+    }
+
     public function message($message, $system = false)
     {
         $message = $this->messages()->create([
@@ -53,8 +72,10 @@ class Conversation extends Model
             'message' => $message,
         ]);
 
-        foreach ($this->activeParticipants as $participant) {
-            if (in_array($participant->user_id, $this->newMessage['excludes'])) {
+        // Everybody should receivce the message,
+        // because if they connect again they would not see these messages when they were gone.
+        foreach ($this->participants as $participant) {
+            if (in_array($participant->user_id, $this->newMessage['exclude'])) {
                 continue;
             }
 
@@ -62,9 +83,11 @@ class Conversation extends Model
                 'user_id' => $participant->user_id
             ]);
         }
+
+        return $message;
     }
 
-    public function excludes($users)
+    public function exclude($users)
     {
         if (!is_array($users)) {
             $users = [$users];
@@ -76,10 +99,10 @@ class Conversation extends Model
             }
 
             // Set the user from a provided model/object.
-            $users[$i] = $users[$i]->user_id;
+            $users[$i] = $users[$i]->id;
         }
 
-        $this->newMessage['excludes'] = array_unique(array_merge($this->newMessage['excludes'], $users));
+        $this->newMessage['exclude'] = array_unique(array_merge($this->newMessage['exclude'], $users));
 
         return $this;
     }

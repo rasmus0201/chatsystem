@@ -2,9 +2,13 @@
 
 namespace Bundsgaard\ChatSupport;
 
+use Bundsgaard\ChatSupport\Storage\Conversation;
+
 class Connections
 {
     public $connections = [];
+
+    private $exclude = [];
 
     public function add($conn)
     {
@@ -16,17 +20,55 @@ class Connections
         unset($this->connections[$conn->resourceId]);
     }
 
+    public function exclude($users)
+    {
+        if (!is_array($users)) {
+            $users = [$users];
+        }
+
+        // Get user ids if user model is provided.
+        for ($i = 0; $i < count($users); $i++) {
+            if (is_integer($users[$i])) {
+                continue;
+            }
+
+            // Set the user from a provided model/object.
+            $users[$i] = $users[$i]->id;
+        }
+
+        $this->exclude = array_unique(array_merge($this->exclude, $users));
+
+        return $this;
+    }
+
     public function agents($roomId)
     {
         return array_filter($this->connections, function($connection) use ($roomId) {
-            return $this->findActive($connection->user, $agent = true, $roomId);
+            return !in_array($connection->user->id, $this->exclude) && $this->findActive($connection->user, $agent = true, $roomId);
         });
     }
 
     public function users($roomId)
     {
         return array_filter($this->connections, function($connection) use ($roomId) {
-            return $this->findActive($connection->user, $agent = false, $roomId);
+            return !in_array($connection->user->id, $this->exclude) && $this->findActive($connection->user, $agent = false, $roomId);
+        });
+    }
+
+    public function activeParticipants($conversation)
+    {
+        if (is_integer($conversation)) {
+            $conversation = Conversation::find($conversation);
+        }
+
+        $userIds = $conversation->activeParticipants()
+                    ->select('user_id')
+                    ->get()
+                    ->pluck('user_id')
+                    ->toArray();
+
+        return array_filter($this->connections, function($connection) use ($userIds) {
+            return !in_array($connection->user->id, $this->exclude) && in_array($connection->user->id, $userIds);
         });
     }
 

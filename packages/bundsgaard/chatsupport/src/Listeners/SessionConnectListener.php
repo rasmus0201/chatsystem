@@ -31,8 +31,7 @@ class SessionConnectListener
     public function handle(MessageEvent $event)
     {
         if (!isset($event->data->session_id, $event->data->name, $event->data->language)) {
-            $event->connection->close();
-            return false; // Stop next listeners
+            return;
         }
 
         $session = $event->connection->session;
@@ -91,8 +90,7 @@ class SessionConnectListener
         if (!$user->agent && isset($conversation)) {
             $this->conversationResponder
                 ->withReceiver($event->connection)
-                ->withConversation($conversation)
-                ->respond();
+                ->respondWith($conversation);
         }
 
         // Multicast the user list for this room to agents in this room.

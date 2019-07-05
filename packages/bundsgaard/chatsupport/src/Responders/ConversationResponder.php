@@ -4,40 +4,30 @@ namespace Bundsgaard\ChatSupport\Responders;
 
 class ConversationResponder extends Responder
 {
-    public $listen = 'conversation';
-
-    private $conversation;
+    public $type = 'conversation';
 
     /**
      * Respond to the user with data
      */
-    public function respond()
+    public function respondWith($conversation)
     {
-        if (!$this->conversation || !isset($this->receivers[0])) {
+        if (empty($conversation) || !isset($this->receivers[0])) {
             return;
         }
 
         $receiver = $this->receivers[0];
-        $conversation = $this->conversation;
         $messages = $conversation->messages()->with(['from']);
 
         $result = $conversation->toArray();
         $result['messages'] = $messages->get();
 
         $receiver->send(json_encode([
-            'type' => $this->listen,
+            'type' => $this->type,
             'message' => 'Previous messages for conversation',
             'data' => [
                 'room_id' => $conversation->room_id,
                 'conversation' => $result,
             ]
         ]));
-    }
-
-    public function withConversation($conversation)
-    {
-        $this->conversation = $conversation;
-
-        return $this;
     }
 }

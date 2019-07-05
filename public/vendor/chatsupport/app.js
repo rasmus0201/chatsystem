@@ -1,9 +1,9 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([["/app"],{
 
 /***/ "../../../node_modules/popper.js/dist/esm/popper.js":
-/*!****************************************************************************!*\
-  !*** /Users/rasmus/http/chatsys/node_modules/popper.js/dist/esm/popper.js ***!
-  \****************************************************************************/
+/*!********************************************************************************!*\
+  !*** /Users/rasmus/Sites/chatsystem/node_modules/popper.js/dist/esm/popper.js ***!
+  \********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4453,7 +4453,7 @@ __webpack_require__.r(__webpack_exports__);
     setRoom: function setRoom(room) {
       this.room = room;
       this.send({
-        type: 'session:room',
+        type: 'room:join',
         data: {
           room_id: this.room.id
         }
@@ -4774,10 +4774,11 @@ __webpack_require__.r(__webpack_exports__);
           break;
 
         case 'conversation':
-          this.conversation = Object.assign(this.conversation, data.conversation);
+          this.conversation = Object.assign({}, this.conversation, data.conversation);
           this.user.room = {
             id: data.room_id
           };
+          this.scroll();
           break;
 
         case 'typing':
@@ -4795,8 +4796,8 @@ __webpack_require__.r(__webpack_exports__);
             return;
           }
 
-          this.clients.push(data.assignee);
-          this.messages.push(data.message);
+          this.conversation.clients.push(data.assignee);
+          this.conversation.messages.push(data.message);
           this.scroll();
           break;
 
@@ -4806,7 +4807,7 @@ __webpack_require__.r(__webpack_exports__);
           }
 
           this.unassign(data.assignee.session_id);
-          this.messages.push({
+          this.conversation.messages.push({
             message: data.assignee.name + ' har forladt chatten.',
             sender: 'System',
             time: data.time
@@ -4816,8 +4817,8 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     getClientIndex: function getClientIndex(session_id) {
-      for (var i = 0; i < this.clients.length; i++) {
-        if (session_id === this.clients[i].session_id) {
+      for (var i = 0; i < this.conversation.clients.length; i++) {
+        if (session_id === this.conversation.clients[i].session_id) {
           return i;
         }
       }
@@ -4828,7 +4829,6 @@ __webpack_require__.r(__webpack_exports__);
       return session_id === 'SYSTEM' || typeof this.getClientIndex(session_id) !== 'undefined';
     },
     leave: function leave(event) {
-      // TODO Make this (closes the conversation)
       this.send(event);
       this.reset();
     },
@@ -17385,7 +17385,9 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return commonChat; });
-/* harmony import */ var _services_websocketService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/websocketService */ "./resources/js/services/websocketService.js");
+/* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
+/* harmony import */ var _services_websocketService__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../services/websocketService */ "./resources/js/services/websocketService.js");
+
  // define a mixin object
 
 var commonChat = {
@@ -17400,7 +17402,7 @@ var commonChat = {
       });
     },
     openSocket: function openSocket() {
-      this.connection = _services_websocketService__WEBPACK_IMPORTED_MODULE_0__["default"]["new"]();
+      this.connection = _services_websocketService__WEBPACK_IMPORTED_MODULE_1__["default"]["new"]();
       this.connection.onopen = this.onOpen;
       this.connection.onmessage = this.onMessage;
 
@@ -17428,7 +17430,7 @@ var commonChat = {
     sendMessage: function sendMessage(event) {
       this.send(event);
       this.conversation.messages.push({
-        created_at: TimeService.now(),
+        created_at: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now(),
         from: this.user,
         message: event.data.message,
         system: 0
@@ -17447,13 +17449,12 @@ var commonChat = {
       var index = this.getClientIndex(session_id);
       this.clients[index].typing = false;
     },
-    // TODO Maybe not needed
     scroll: function scroll() {
-      var _this = this;
+      if (!this.$refs['chat']) {
+        return;
+      }
 
-      this.$nextTick(function () {
-        _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
-      });
+      this.$refs['chat'].scroll();
     }
   }
 };
@@ -17595,8 +17596,8 @@ function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })
