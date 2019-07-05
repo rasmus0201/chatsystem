@@ -8,7 +8,7 @@ use Bundsgaard\ChatSupport\Storage\Conversation;
 
 class AssignListener
 {
-    public $eventType = 'assign';
+    public $listen = 'assign';
 
     /**
      * Handle the event.
@@ -60,7 +60,7 @@ class AssignListener
 
         foreach ($connections as $to) {
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'You got assigned',
                 'data' => [
                     'conversation_id' => $conversation->user_id,

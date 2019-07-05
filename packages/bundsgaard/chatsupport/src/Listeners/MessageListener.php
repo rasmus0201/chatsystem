@@ -6,7 +6,7 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 
 class MessageListener
 {
-    public $eventType = 'message';
+    public $listen = 'message';
 
     /**
      * Handle the event.
@@ -32,7 +32,7 @@ class MessageListener
             }
 
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'New message',
                 'data' => [
                     'from' => $event->connection->session['identifier'],

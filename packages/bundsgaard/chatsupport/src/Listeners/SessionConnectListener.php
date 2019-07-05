@@ -11,7 +11,7 @@ use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
 class SessionConnectListener
 {
-    public $eventType = 'session:connect';
+    public $listen = 'session:connect';
 
     private $conversationListResponder;
     private $conversationResponder;

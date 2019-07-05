@@ -6,7 +6,7 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 
 class UnassignListener
 {
-    public $eventType = 'unassign';
+    public $listen = 'unassign';
 
     /**
      * Handle the event.
@@ -24,7 +24,7 @@ class UnassignListener
         // TODO Store this in DB
         foreach ($connections as $to) {
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'You got unassigned',
                 'data' => [
                     'assignee' => [

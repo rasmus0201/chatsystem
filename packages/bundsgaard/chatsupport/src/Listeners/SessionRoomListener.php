@@ -9,7 +9,7 @@ use Bundsgaard\ChatSupport\Responders\ConversationResponder;
 
 class SessionRoomListener
 {
-    public $eventType = 'session:room';
+    public $listen = 'session:room';
 
     private $conversationListResponder;
     private $conversationResponder;

@@ -6,7 +6,7 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 
 class TypingListener
 {
-    public $eventType = 'typing';
+    public $listen = 'typing';
 
     /**
      * Handle the event.
@@ -21,7 +21,7 @@ class TypingListener
 
         foreach ($connections as $to) {
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'Is typing',
                 'data' => [
                     'from' => $event->connection->session['identifier'],

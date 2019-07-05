@@ -33,8 +33,8 @@ class EventDispatcher
 
             // Automatically find out if the listener should be called
             // based on the event type
-            if (isset($properties['type']) && property_exists($listener, 'eventType')) {
-                if ($properties['type'] !== $listener->eventType) {
+            if (isset($properties['type']) && property_exists($listener, 'listen')) {
+                if ($properties['type'] !== $listener->listen) {
                     continue;
                 }
             }

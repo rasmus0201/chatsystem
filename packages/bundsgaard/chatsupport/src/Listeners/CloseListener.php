@@ -8,7 +8,7 @@ use Bundsgaard\ChatSupport\Responders\ConversationListResponder;
 
 class CloseListener
 {
-    public $eventType = 'close';
+    public $listen = 'close';
 
     private $conversationListResponder;
 

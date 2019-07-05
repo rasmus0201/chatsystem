@@ -4,7 +4,7 @@ namespace Bundsgaard\ChatSupport\Responders;
 
 class UserListResponder extends Responder
 {
-    public $eventType = 'user:list';
+    public $listen = 'user:list';
 
     /**
      * Respond to the user with data
@@ -32,7 +32,7 @@ class UserListResponder extends Responder
 
         foreach ($this->receivers as $to) {
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'List of connections in room',
                 'data' => ['users' => $sessions]
             ]));

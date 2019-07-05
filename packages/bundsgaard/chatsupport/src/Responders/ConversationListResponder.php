@@ -6,7 +6,7 @@ use Bundsgaard\ChatSupport\Storage\Room;
 
 class ConversationListResponder extends Responder
 {
-    public $eventType = 'conversation:list';
+    public $listen = 'conversation:list';
 
     /**
      * Respond to the user with data
@@ -26,7 +26,7 @@ class ConversationListResponder extends Responder
 
         foreach ($this->receivers as $to) {
             $to->send(json_encode([
-                'type' => $this->eventType,
+                'type' => $this->listen,
                 'message' => 'List of connections in room',
                 'data' => [
                     'conversations' => $this->room->activeConversations()->with(['user'])->get()

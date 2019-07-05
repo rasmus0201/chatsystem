@@ -6,7 +6,7 @@ use Bundsgaard\ChatSupport\Events\MessageEvent;
 
 class TerminateListener
 {
-    public $eventType = 'terminate';
+    public $listen = 'terminate';
 
     /**
      * Handle the event.

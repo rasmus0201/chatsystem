@@ -4,7 +4,7 @@ namespace Bundsgaard\ChatSupport\Responders;
 
 class ConversationResponder extends Responder
 {
-    public $eventType = 'conversation';
+    public $listen = 'conversation';
 
     private $conversation;
 
@@ -22,7 +22,7 @@ class ConversationResponder extends Responder
         $messages = $conversation->messages()->with(['from']);
 
         $receiver->send(json_encode([
-            'type' => $this->eventType,
+            'type' => $this->listen,
             'message' => 'Previous messages for conversation',
             'data' => [
                 'room_id' => $conversation->room_id,
