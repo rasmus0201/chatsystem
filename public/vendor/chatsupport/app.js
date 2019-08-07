@@ -1,9 +1,9 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([["/app"],{
 
 /***/ "../../../node_modules/popper.js/dist/esm/popper.js":
-/*!********************************************************************************!*\
-  !*** /Users/rasmus/Sites/chatsystem/node_modules/popper.js/dist/esm/popper.js ***!
-  \********************************************************************************/
+/*!****************************************************************************!*\
+  !*** /Users/rasmus/http/chatsys/node_modules/popper.js/dist/esm/popper.js ***!
+  \****************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4265,7 +4265,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-  props: ['user', 'conversation'],
+  props: ['user', 'conversation', 'disabled'],
   data: function data() {
     return {
       message: ''
@@ -4281,17 +4281,23 @@ __webpack_require__.r(__webpack_exports__);
       });
       this.scroll();
     },
-    type: _.throttle(function (e) {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter') {
+    typing: _.throttle(function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter' || e.key === 'Meta' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Escape' || e.key === 'Control') {
+        return;
+      } // Only allow printable characters
+      // Backspace is also allowed when a message has been typed
+
+
+      if (e.keyCode < 48 && !(e.keyCode === 8 && this.message.length > 0)) {
         return;
       }
 
-      if (!this.conversation.clients.length) {
+      if (this.disabled) {
         return;
       }
 
-      this.$emit('message:type', {
-        type: 'message:type',
+      this.$emit('message:typing', {
+        type: 'message:typing',
         data: {
           conversation_id: this.conversation.id
         }
@@ -4299,8 +4305,7 @@ __webpack_require__.r(__webpack_exports__);
       this.scroll();
     }, 350),
     send: function send() {
-      // TODO This should be allowed when we the agent can just get all messages.
-      if (!this.conversation.clients.length) {
+      if (this.disabled) {
         return;
       }
 
@@ -4346,26 +4351,7 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _services_timeService__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../services/timeService */ "./resources/js/services/timeService.js");
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+/* harmony import */ var _services_commonChat__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../services/commonChat */ "./resources/js/services/commonChat.js");
 //
 //
 //
@@ -4408,19 +4394,21 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
+  mixins: [_services_commonChat__WEBPACK_IMPORTED_MODULE_1__["default"]],
   data: function data() {
     return {
-      connection: null,
-      session_id: window.Chatsupport.session,
-      name: 'Supporter',
-      message: '',
-      room: null,
+      user: {
+        agent: true,
+        room: {},
+        name: 'Supporter',
+        session_id: window.Chatsupport.session
+      },
       conversations: [],
       assignedConversations: [],
-      activeConversation: {},
-      activeClients: [],
-      typingTimeouts: []
+      clients: [],
+      conversation: {}
     };
   },
   props: ['rooms'],
@@ -4432,11 +4420,11 @@ __webpack_require__.r(__webpack_exports__);
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = this.activeClients[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var _client = _step.value;
+        for (var _iterator = this.clients[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var client = _step.value;
 
-          if (_client.typing) {
-            typing.push(_client);
+          if (client.typing) {
+            typing.push(client);
           }
         }
       } catch (err) {
@@ -4462,44 +4450,13 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     format: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].format,
-    setRoom: function setRoom(room) {
-      this.room = room;
-      this.send({
-        type: 'room:join',
-        data: {
-          room_id: this.room.id
-        }
-      });
-    },
-    openSocket: function openSocket() {
-      var protocol = location.protocol === 'http:' ? 'ws' : 'wss';
-      var host = protocol + '://' + window.location.hostname;
-      var url = host + '/websocket';
-
-      if (host.match(/\.(test|localhost|dev)/)) {
-        var url = host + ':9000';
-      }
-
-      this.connection = new WebSocket(url);
-      this.connection.onopen = this.onOpen;
-      this.connection.onmessage = this.onMessage; // Make some kind of error handler when connection gets closed
-      // or an error occurred.
-
-      this.connection.onclose = function (e) {
-        console.log(e, 'CLOSE');
-      };
-
-      this.connection.onerror = function (e) {
-        console.log(e, 'ERROR');
-      };
-    },
     onOpen: function onOpen(e) {
       this.send({
         type: 'session:connect',
         data: {
           language: navigator.language,
-          name: this.name,
-          session_id: this.session_id,
+          name: this.user.name,
+          session_id: this.user.session_id,
           credentials: {
             username: 'test',
             password: 'test'
@@ -4514,32 +4471,32 @@ __webpack_require__.r(__webpack_exports__);
 
       switch (type) {
         case 'message':
-          var c_id = data.conversation_id;
+          var _c_id = data.conversation_id;
 
-          if (!this.assignedTo(c_id)) {
+          if (!this.assignedTo(_c_id)) {
             return;
           }
 
-          if (!this.isActiveConversation(c_id)) {
-            this.$set(this.assignedConversations[c_id], 'unseen', true);
+          if (!this.isActiveConversation(_c_id)) {
+            this.$set(this.assignedConversations[_c_id], 'unseen', true);
             this.$forceUpdate();
           }
 
-          var messages = this.assignedConversations[c_id].messages;
+          var messages = this.assignedConversations[_c_id].messages;
           messages.push(data.message);
-          this.$set(this.assignedConversations[c_id], 'messages', messages);
+          this.$set(this.assignedConversations[_c_id], 'messages', messages);
           this.messages.push(data);
           this.clearTyper(data.message.user.session_id);
           this.scroll();
           break;
 
         case 'room':
-          this.room = {
+          this.user.room = {
             id: data.room_id
           };
           break;
 
-        case 'typing':
+        case 'message:typing':
           if (!this.assignedTo(data.conversation_id)) {
             return;
           }
@@ -4554,13 +4511,13 @@ __webpack_require__.r(__webpack_exports__);
             return conversation.id;
           }); // Active client has disconnected
 
-          if (this.activeConversation.id && !newConversations.includes(this.activeConversation.id)) {
-            this.activeConversation.messages.push({
-              message: this.activeConversation.user.name + ' har lukket chatten.',
+          if (this.conversation.id && !newConversations.includes(this.conversation.id)) {
+            this.conversation.messages.push({
+              message: this.conversation.user.name + ' har lukket chatten.',
               sender: 'System',
               time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
             });
-            this.activeConversation.closed = true;
+            this.conversation.closed = true;
           }
 
           this.conversations = data.conversations;
@@ -4568,80 +4525,30 @@ __webpack_require__.r(__webpack_exports__);
           break;
       }
     },
-    send: function send(data) {
-      this.connection.send(JSON.stringify(data));
-    },
-    sendMessage: function sendMessage() {
-      var message = this.message.trim();
-      var c_id = this.activeConversation.id;
+    sendMessage: function sendMessage(event) {
+      var conversation_id = this.conversation.id;
 
-      if (message === '' || !c_id) {
+      if (!conversation_id) {
         return;
       }
 
-      this.send({
-        type: 'message',
-        data: {
-          message: message,
-          conversation: c_id
-        }
-      });
+      this.send(event);
       var messages = this.assignedConversations[c_id].messages;
       var msg = {
         from: this.session_id,
-        message: message,
+        message: event.data.message,
         sender: this.name,
         time: _services_timeService__WEBPACK_IMPORTED_MODULE_0__["default"].now()
       };
       messages.push(msg);
       this.$set(this.assignedConversations[c_id], 'messages', messages);
-      this.message = '';
       this.scroll();
     },
-    typing: _.throttle(function (e) {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter') {
-        return;
-      }
-
-      if (!this.activeClients.length) {
-        return;
-      }
-
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
-
-      try {
-        for (var _iterator2 = this.activeClients[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var _client2 = _step2.value;
-          this.send({
-            type: 'typing',
-            data: {
-              to: _client2.session_id
-            }
-          });
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-    }, 350),
     assign: function assign(conversation) {
       if (!this.assignedTo(conversation.id)) {
         this.send({
           type: 'assign',
           data: {
-            // assignee: this.session_id,
             conversation_id: conversation.id
           }
         });
@@ -4652,24 +4559,17 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       this.assignedConversations[conversation.id].unseen = false;
-      this.activeConversation = this.assignedConversations[conversation.id];
+      this.conversation = this.assignedConversations[conversation.id];
     },
-    unassign: function unassign(conversation) {
-      this.send({
-        type: 'unassign',
-        data: {
-          assignee: this.session_id,
-          to: client.session_id
-        }
-      });
-      this.activeConversation = {};
-      delete this.assignedConversations[conversation.id];
+    unassign: function unassign(event) {
+      this.conversation = {};
+      delete this.assignedConversations[event.data.conversation_id];
     },
     assignedTo: function assignedTo(id) {
       return typeof this.assignedConversations[id] !== 'undefined';
     },
     isActiveConversation: function isActiveConversation(id) {
-      return this.activeConversation.id === id;
+      return this.conversation.id === id;
     },
     unseenMessages: function unseenMessages(id) {
       if (typeof this.assignedConversations[id] === 'undefined') {
@@ -4679,36 +4579,13 @@ __webpack_require__.r(__webpack_exports__);
       return this.assignedConversations[id].unseen === true;
     },
     getClientIndex: function getClientIndex(session_id) {
-      for (var i = 0; i < this.activeClients.length; i++) {
-        if (session_id === this.activeClients[i].session_id) {
+      for (var i = 0; i < this.clients.length; i++) {
+        if (session_id === this.clients[i].session_id) {
           return i;
         }
       }
 
       return undefined;
-    },
-    setTyper: function setTyper(session_id) {
-      this.typingTimeouts[session_id] = setTimeout(function () {
-        this.clearTyper(session_id);
-      }.bind(this), 1000);
-      var index = this.getClientIndex(session_id);
-      this.activeClients[index].typing = true;
-    },
-    clearTyper: function clearTyper(session_id) {
-      clearTimeout(this.typingTimeouts[session_id]);
-      var index = this.getClientIndex(session_id);
-      this.activeClients[index].typing = false;
-    },
-    scroll: function scroll() {
-      var _this = this;
-
-      this.$nextTick(function () {
-        if (!_this.$refs.messagesContainer) {
-          return;
-        }
-
-        _this.$refs.messagesContainer.scrollTop = _this.$refs.messagesContainer.scrollHeight;
-      });
     }
   }
 });
@@ -4741,20 +4618,19 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   mixins: [_services_commonChat__WEBPACK_IMPORTED_MODULE_1__["default"]],
   data: function data() {
     return {
-      connection: null,
       user: {
         room: {},
         name: 'Rasmus',
         session_id: window.Chatsupport.session
       },
-      conversation: {},
-      typingTimeouts: []
+      conversation: {}
     };
   },
   props: ['rooms'],
@@ -4780,7 +4656,7 @@ __webpack_require__.r(__webpack_exports__);
           break;
 
         case 'room':
-          this.room = {
+          this.user.room = {
             id: data.room_id
           };
           break;
@@ -4793,7 +4669,7 @@ __webpack_require__.r(__webpack_exports__);
           this.scroll();
           break;
 
-        case 'typing':
+        case 'message:typing':
           if (!this.conversation.clients.length) {
             return;
           }
@@ -16133,7 +16009,7 @@ var render = function() {
                 2
               ),
               _vm._v(" "),
-              !_vm.conversation.clients.length
+              _vm.disabled
                 ? _c("message", {
                     staticClass:
                       "bg-light border-top position-absolute chat-window-bottom-status",
@@ -16172,7 +16048,7 @@ var render = function() {
                       return _vm.send($event)
                     },
                     function($event) {
-                      return _vm.type($event)
+                      return _vm.typing($event)
                     }
                   ],
                   input: function($event) {
@@ -16190,10 +16066,7 @@ var render = function() {
                 "button",
                 {
                   staticClass: "btn btn-block btn-primary",
-                  attrs: {
-                    type: "button",
-                    disabled: !_vm.conversation.clients.length
-                  },
+                  attrs: { type: "button", disabled: _vm.disabled },
                   on: { click: _vm.send }
                 },
                 [_vm._v("Send")]
@@ -16229,7 +16102,7 @@ var render = function() {
   return _c(
     "div",
     [
-      !_vm.room
+      !_vm.user.room.id
         ? _c("rooms", {
             attrs: { rooms: _vm.rooms },
             on: {
@@ -16341,181 +16214,32 @@ var render = function() {
               )
             ]),
             _vm._v(" "),
-            _c("div", { staticClass: "col-8" }, [
-              _c(
-                "div",
-                {
-                  ref: "messagesContainer",
-                  staticClass: "overflow-auto border border-primary rounded-sm",
-                  staticStyle: { height: "400px" }
-                },
-                [
-                  _vm.activeConversation.id
-                    ? _c(
-                        "p",
-                        {
-                          staticClass: "p-2 mb-0 bg-light border-bottom",
-                          staticStyle: { position: "sticky" }
-                        },
-                        [
-                          _vm._v(
-                            "\n                    " +
-                              _vm._s(_vm.activeConversation.user.name) +
-                              " - (" +
-                              _vm._s(_vm.activeConversation.user.language) +
-                              ") "
-                          ),
-                          _c("small", [
-                            _vm._v(
-                              "(Session: " +
-                                _vm._s(_vm.activeConversation.user.session_id) +
-                                ")"
-                            )
-                          ]),
-                          _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-sm btn-warning",
-                              on: {
-                                click: function($event) {
-                                  return _vm.unassign(_vm.activeConversation)
-                                }
-                              }
-                            },
-                            [_vm._v("Afslut")]
-                          )
-                        ]
-                      )
-                    : _vm._e(),
-                  _vm._v(" "),
-                  _c(
-                    "div",
-                    { staticClass: "messages" },
-                    [
-                      _vm._l(_vm.activeConversation.messages, function(
-                        message,
-                        index
-                      ) {
-                        return _c(
-                          "p",
-                          {
-                            key: index,
-                            staticClass: "p-2 mb-0 message",
-                            class: {
-                              client:
-                                !message.from ||
-                                message.from.session_id !== _vm.session_id
-                            }
-                          },
-                          [
-                            _vm._v(
-                              "\n                        " +
-                                _vm._s(
-                                  message.system ? "System" : message.from.name
-                                ) +
-                                ": " +
-                                _vm._s(message.message)
-                            ),
-                            _c("br"),
-                            _vm._v(" "),
-                            _c("small", [
-                              _vm._v(_vm._s(_vm.format(message.created_at)))
-                            ])
-                          ]
-                        )
-                      }),
-                      _vm._v(" "),
-                      _vm._l(_vm.typingClients, function(client, index) {
-                        return _c(
-                          "p",
-                          {
-                            key: index + "-typing",
-                            staticClass:
-                              "p-2 mb-0 d-flex align-items-center message client"
-                          },
-                          [
-                            _c("span", { staticClass: "mr-2" }, [
-                              _vm._v(_vm._s(client.name) + ":")
-                            ]),
-                            _vm._v(" "),
-                            _c("span", { staticClass: "lds-ellipsis" }, [
-                              _c("span"),
-                              _vm._v(" "),
-                              _c("span"),
-                              _vm._v(" "),
-                              _c("span")
-                            ])
-                          ]
-                        )
-                      })
-                    ],
-                    2
-                  )
-                ]
-              ),
-              _vm._v(" "),
-              _c("div", { staticClass: "row mt-4" }, [
-                _c("div", { staticClass: "col-9" }, [
-                  _c("input", {
-                    directives: [
-                      {
-                        name: "model",
-                        rawName: "v-model",
-                        value: _vm.message,
-                        expression: "message"
-                      }
-                    ],
-                    staticClass: "form-control",
-                    attrs: { type: "text", placeholder: "Besked" },
-                    domProps: { value: _vm.message },
-                    on: {
-                      keyup: [
-                        function($event) {
-                          if (
-                            !$event.type.indexOf("key") &&
-                            _vm._k(
-                              $event.keyCode,
-                              "enter",
-                              13,
-                              $event.key,
-                              "Enter"
-                            )
-                          ) {
-                            return null
-                          }
-                          return _vm.sendMessage($event)
-                        },
-                        function($event) {
-                          return _vm.typing($event)
-                        }
-                      ],
-                      input: function($event) {
-                        if ($event.target.composing) {
-                          return
-                        }
-                        _vm.message = $event.target.value
-                      }
-                    }
-                  })
-                ]),
-                _vm._v(" "),
-                _c("div", { staticClass: "col-3" }, [
-                  _c(
-                    "button",
-                    {
-                      staticClass: "btn btn-block btn-primary",
-                      attrs: {
-                        type: "button",
-                        disabled: !_vm.activeConversation.id
-                      },
-                      on: { click: _vm.sendMessage }
+            _c(
+              "div",
+              { staticClass: "col-8" },
+              [
+                _c("chat-window", {
+                  ref: "chat",
+                  attrs: {
+                    user: _vm.user,
+                    disabled: false,
+                    conversation: _vm.conversation
+                  },
+                  on: {
+                    "conversation:leave": function($event) {
+                      return _vm.unassign($event)
                     },
-                    [_vm._v("Send")]
-                  )
-                ])
-              ])
-            ])
+                    "message:send": function($event) {
+                      return _vm.sendMessage($event)
+                    },
+                    "message:typing": function($event) {
+                      return _vm.send($event)
+                    }
+                  }
+                })
+              ],
+              1
+            )
           ])
     ],
     1
@@ -16557,7 +16281,11 @@ var render = function() {
           })
         : _c("chat-window", {
             ref: "chat",
-            attrs: { user: _vm.user, conversation: _vm.conversation },
+            attrs: {
+              user: _vm.user,
+              disabled: this.conversation.clients.length === 0,
+              conversation: _vm.conversation
+            },
             on: {
               "conversation:leave": function($event) {
                 return _vm.leave($event)
@@ -16565,7 +16293,7 @@ var render = function() {
               "message:send": function($event) {
                 return _vm.sendMessage($event)
               },
-              "message:type": function($event) {
+              "message:typing": function($event) {
                 return _vm.send($event)
               }
             }
@@ -17412,6 +17140,12 @@ __webpack_require__.r(__webpack_exports__);
  // define a mixin object
 
 var commonChat = {
+  data: function data() {
+    return {
+      connection: null,
+      typingTimeouts: []
+    };
+  },
   methods: {
     setRoom: function setRoom(room) {
       this.user.room = room;
@@ -17617,8 +17351,8 @@ function () {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /Users/rasmus/Sites/chatsystem/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /Users/rasmus/http/chatsys/packages/bundsgaard/chatsupport/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

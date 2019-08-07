@@ -33,7 +33,7 @@ class ConversationResponder extends Responder
 
         $receiver->send(json_encode([
             'type' => $this->type,
-            'message' => 'Previous messages for conversation',
+            'message' => 'Data for ongoing conversation',
             'data' => [
                 'room_id' => $conversation->room_id,
                 'conversation' => $result,

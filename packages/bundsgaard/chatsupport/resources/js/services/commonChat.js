@@ -3,6 +3,12 @@ import WebSocketService from '../services/websocketService';
 
 // define a mixin object
 const commonChat = {
+    data() {
+        return {
+            connection: null,
+            typingTimeouts: []
+        }
+    },
     methods: {
         setRoom(room) {
             this.user.room = room;

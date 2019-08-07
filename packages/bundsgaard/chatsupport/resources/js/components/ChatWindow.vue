@@ -17,14 +17,14 @@
                 </div>
 
                 <!-- Status bar -->
-                <message v-if="!conversation.clients.length" class="bg-light border-top position-absolute chat-window-bottom-status" :message="{ system: 1, message: 'Venter på betjening' }"></message>
+                <message v-if="disabled" class="bg-light border-top position-absolute chat-window-bottom-status" :message="{ system: 1, message: 'Venter på betjening' }"></message>
             </div>
             <div class="row mt-4">
                 <div class="col-9">
-                    <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="send" v-on:keyup="type($event)">
+                    <input type="text" class="form-control" v-model="message" placeholder="Besked" v-on:keyup.enter="send" v-on:keyup="typing($event)">
                 </div>
                 <div class="col-3">
-                    <button type="button" class="btn btn-block btn-primary" v-on:click="send" :disabled="!conversation.clients.length">Send</button>
+                    <button type="button" class="btn btn-block btn-primary" v-on:click="send" :disabled="disabled">Send</button>
                 </div>
             </div>
         </div>
@@ -35,7 +35,7 @@
     import TimeService from '../services/timeService';
 
     export default {
-        props: ['user', 'conversation'],
+        props: ['user', 'conversation', 'disabled'],
 
         data() {
             return {
@@ -54,17 +54,32 @@
                 this.scroll();
             },
 
-            type: _.throttle(function(e) {
-                if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Enter') {
+            typing: _.throttle(function(e) {
+                if (e.metaKey ||
+                    e.ctrlKey ||
+                    e.altKey ||
+                    e.key === 'Enter' ||
+                    e.key === 'Meta' ||
+                    e.key === 'Shift' ||
+                    e.key === 'Alt' ||
+                    e.key === 'Escape' ||
+                    e.key === 'Control'
+                ) {
                     return;
                 }
 
-                if (!this.conversation.clients.length) {
+                // Only allow printable characters
+                // Backspace is also allowed when a message has been typed
+                if (e.keyCode < 48 && !(e.keyCode === 8 && this.message.length > 0)) {
                     return;
                 }
 
-                this.$emit('message:type', {
-                    type: 'message:type',
+                if (this.disabled) {
+                    return;
+                }
+
+                this.$emit('message:typing', {
+                    type: 'message:typing',
                     data: {
                         conversation_id: this.conversation.id
                     }
@@ -73,8 +88,7 @@
             }, 350),
 
             send() {
-                // TODO This should be allowed when we the agent can just get all messages.
-                if (!this.conversation.clients.length) {
+                if (this.disabled) {
                     return;
                 }
 

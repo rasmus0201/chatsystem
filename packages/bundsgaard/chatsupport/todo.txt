@@ -1,3 +1,8 @@
+Typing needs for user (receive)
+Typing needs for agent (receive + send)
+Auto-connect (click the "forbind" btn) to user when refreshing. (maybe set active?)
+Send message for agent/user (receive + send)
+
 Actions:
     session:connect
     session:login

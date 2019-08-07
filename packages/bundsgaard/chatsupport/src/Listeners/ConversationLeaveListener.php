@@ -43,7 +43,7 @@ class ConversationLeaveListener
         $user->save();
 
         // Store the last message in db (user disconnected / closed chat)
-        $message = $conversation->exclude($user->id)->message($user->name . ' forlad chatten.', true);
+        $message = $conversation->exclude($user->id)->message($user->name . ' forlod chatten.', true);
 
         // Update the user to be disconnected participant
         $conversation->disconnect($user);

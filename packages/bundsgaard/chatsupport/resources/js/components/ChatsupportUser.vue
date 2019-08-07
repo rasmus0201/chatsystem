@@ -4,10 +4,11 @@
         <chat-window v-else
             ref="chat"
             :user="user"
+            :disabled="this.conversation.clients.length === 0"
             :conversation="conversation"
             @conversation:leave="leave($event)"
             @message:send="sendMessage($event)"
-            @message:type="send($event)">
+            @message:typing="send($event)">
 
         </chat-window>
     </div>
@@ -21,14 +22,12 @@
         mixins: [commonChat],
         data() {
             return {
-                connection: null,
                 user: {
                     room: {},
                     name: 'Rasmus',
                     session_id: window.Chatsupport.session
                 },
                 conversation: {},
-                typingTimeouts: [],
             }
         },
 
@@ -56,7 +55,7 @@
 
                         break;
                     case 'room':
-                        this.room = { id: data.room_id };
+                        this.user.room = { id: data.room_id };
                         break;
                     case 'conversation':
                         this.conversation = Object.assign({}, this.conversation, data.conversation);
@@ -64,7 +63,7 @@
                         this.scroll();
 
                         break;
-                    case 'typing':
+                    case 'message:typing':
                         if (!this.conversation.clients.length) {
                             return;
                         }
